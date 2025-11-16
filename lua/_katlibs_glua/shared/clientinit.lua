@@ -1,5 +1,5 @@
-if kat_ClientInit then return end
-kat_ClientInit = {}
+if KClientInit then return end
+KClientInit = {}
 AddCSLuaFile()
 
 --[[ DOCS:
@@ -9,17 +9,17 @@ Has a hook to know when it's safe to assume the client is up to date.
 
 SERVER:
     Functions:
-        void kat_ClientInit.SendClientData(string key,function netmsg)
+        void KClientInit.SendClientData(string key,function netmsg)
 
 	Hooks:
 		kat_OnClientInit(Player ply)
 
 CLIENT:
     Functions:
-        void kat_ClientInit.ReceiveServerData(string key,function netmsg)
+        void KClientInit.ReceiveServerData(string key,function netmsg)
 ]]
 
-local NETSTRING = "kat_clientinit"
+local NETSTRING = "KClientInit"
 
 local h_Run = hook.Run
 local n_Start = net.Start
@@ -35,11 +35,11 @@ if SERVER then
 	util.AddNetworkString(NETSTRING)
 
 	local alreadyLoaded = {}
-	hook.Add("PlayerDisconnected","kat_clientinit",function(ply)
+	hook.Add("PlayerDisconnected","KClientInit",function(ply)
 		alreadyLoaded[ply] = nil
 	end)
 
-	net.Receive("kat_clientinit", function(_,ply)
+	net.Receive("KClientInit", function(_,ply)
 		if alreadyLoaded[ply] then return end
 		alreadyLoaded[ply] = true
 
@@ -53,20 +53,20 @@ if SERVER then
 		end
 	end)
 
-	function kat_ClientInit.SendClientData(key,func)
+	function KClientInit.SendClientData(key,func)
 		receivers[key] = func
 	end
 elseif CLIENT then
-	hook.Add("InitPostEntity","kat_ClientInit",function()
+	hook.Add("InitPostEntity","KClientInit",function()
 		n_Start(NETSTRING)
 		n_SendToServer()
 	end)
 
-	function kat_ClientInit.ReceiveServerData(key,func)
+	function KClientInit.ReceiveServerData(key,func)
 		receivers[key] = func
 	end
 
-	net.Receive("kat_clientinit",function()
+	net.Receive("KClientInit",function()
 		local func = receivers[n_ReadString()]
 		if func then func() end
 	end)

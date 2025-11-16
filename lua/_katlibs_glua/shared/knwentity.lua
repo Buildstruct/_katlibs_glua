@@ -1,5 +1,5 @@
-if kat_NWEntity then return end
-kat_NWEntity = {}
+if KNWEntity then return end
+KNWEntity = {}
 AddCSLuaFile()
 
 --[[ DOCS:
@@ -10,8 +10,8 @@ Contains hook methods that act as convenient callbacks on entity clientside init
 SERVER:
     Functions:
         void net.WriteKNWEntity(Entity ent)
-        void kat_NWEntity.SendRemoveCall(Entity ent,Player ply)
-        void kat_NWEntity.BroadcastRemoveCall(Entity ent)
+        void KNWEntity.SendRemoveCall(Entity ent,Player ply)
+        void KNWEntity.BroadcastRemoveCall(Entity ent)
 
 CLIENT:
     Classes:
@@ -51,13 +51,13 @@ if SERVER then
         n_WriteUInt(e_EntIndex(ent),13)
     end
 
-    function kat_NWEntity.SendRemoveCall(ent,ply)
+    function KNWEntity.SendRemoveCall(ent,ply)
         n_Start(NETSTRING_ENTREMOVED)
         n_WriteUInt(e_EntIndex(ent),13)
         n_Send(ply)
     end
 
-    function kat_NWEntity.BroadcastRemoveCall(ent)
+    function KNWEntity.BroadcastRemoveCall(ent)
         if not activeEnts[ent] then return end
         activeEnts[ent] = nil
 
@@ -65,7 +65,7 @@ if SERVER then
         n_WriteUInt(e_EntIndex(ent),13)
         n_Broadcast()
     end
-    hook.Add("EntityRemoved","kat_NWEntity",kat_NWEntity.BroadcastRemoveCall)
+    hook.Add("EntityRemoved","KNWEntity",KNWEntity.BroadcastRemoveCall)
 elseif CLIENT then
     local retTrue = function() return true end
     local retFalse = function() return false end
@@ -134,7 +134,7 @@ elseif CLIENT then
         return activeEnts[eid]
     end
 
-    hook.Add("NetworkEntityCreated","kat_NWEntity",function(ent)
+    hook.Add("NetworkEntityCreated","KNWEntity",function(ent)
         if not IsValid(ent) then return end
 
         local eid = e_EntIndex(ent)
@@ -147,7 +147,7 @@ elseif CLIENT then
         callHooks(eid,"OnInitialize")
     end)
 
-    hook.Add("EntityRemoved","kat_NWEntity",function(ent)
+    hook.Add("EntityRemoved","KNWEntity",function(ent)
         local eid = e_EntIndex(ent)
         local knwEnt = activeEnts[eid]
         if not knwEnt then return end
