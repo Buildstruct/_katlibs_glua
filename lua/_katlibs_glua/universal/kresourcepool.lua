@@ -3,12 +3,12 @@ local m_min = math.min
 local Tick_Regen
 
 local regenerating = setmetatable({},{__mode = "k"})
-local privTab = setmetatable({},{__mode = "k"})
 
-KRegenLimiter = setmetatable({},{
+local privTab = setmetatable({},{__mode = "k"})
+KResourcePool = setmetatable({},{
     __index = base,
     __call = function(_,max,regenRatePerSecond)
-        local newObj = setmetatable({},{__index = KRegenLimiter})
+        local newObj = setmetatable({},{__index = KResourcePool})
         privTab[newObj] = {
             Amount = max,
             Max = max,
@@ -18,13 +18,13 @@ KRegenLimiter = setmetatable({},{
     end,
 })
 
-function KRegenLimiter:Use(cost)
+function KResourcePool:Use(cost)
     local priv = privTab[self]
     assert(isnumber(cost),"expected number")
-    assert(cost,"expected cost < 0")
+    assert(cost >= 0,"expected cost >= 0")
 
     regenerating[priv] = true
-    hook.Add("Tick","KRegenLimiter",Tick_Regen)
+    hook.Add("Tick","KResourcePool",Tick_Regen)
 
     local val = priv.Amount - cost
     if val < 0 then return false end
@@ -35,7 +35,7 @@ end
 
 function Tick_Regen()
     if not next(regenerating) then
-        hook.Remove("Tick","KRegenLimiter")
+        hook.Remove("Tick","KResourcePool")
         return 
     end
 
