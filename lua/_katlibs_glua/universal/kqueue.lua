@@ -58,7 +58,7 @@ function KQueue:PopLeft()
     local priv = privTab[self]
 
     local first = priv.first
-    assert(priv.first <= last,"list empty")
+    assert(priv.first <= priv.last,"list empty")
     local value = priv[first]
     priv[first] = nil
     priv.first = first + 1
@@ -70,7 +70,7 @@ function KQueue:PopRight()
     local priv = privTab[self]
 
     local last = priv.last
-    assert(priv.first <= last,"list empty")
+    assert(priv.first <= priv.last,"list empty")
     local value = priv[last]
     priv[last] = nil
     priv.last = last - 1
