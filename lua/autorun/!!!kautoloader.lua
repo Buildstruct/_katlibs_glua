@@ -25,7 +25,6 @@ local function addFile(file,directory,realm)
     local action = fileActions[realm]
     if not action then return end
     action(directory .. file)
-    print(realm,directory .. file)
 end
 
 function KAutoLoader.IncludeDir(directory,optionalArgs)
