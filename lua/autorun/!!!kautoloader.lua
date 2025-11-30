@@ -2,6 +2,8 @@ AddCSLuaFile()
 
 KAutoLoader = {}
 
+local function nop() end
+
 local fileActions
 if SERVER then
     fileActions = {
@@ -14,6 +16,7 @@ if SERVER then
     }
 elseif CLIENT then
     fileActions = {
+        sv = nop,
         cl = include,
         sh = include,
     }
@@ -23,7 +26,6 @@ local function addFile(file,directory,realm)
 	if not realm then realm = string.lower(string.Left(file, 2)) end
 
     local action = fileActions[realm]
-    if not action then return end
     action(directory .. file)
 end
 
