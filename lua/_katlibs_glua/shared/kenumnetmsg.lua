@@ -28,6 +28,12 @@ local function getBitsInNum(n)
 end
 
 function KEnumNetMsg(netstring,enums)
+    KError.ValidateArg(1,"netstring",KVarCondition.StringNotEmpty(netstring))
+    KError.ValidateArg(2,"enums",KVarCondition.Table(enums))
+    for k,v in pairs(enums) do
+        KError.ValidateParameter(2,"enums",k,KVarCondition.NumberGreaterOrEqual(v,0))
+    end
+
     if SERVER then util.AddNetworkString(netstring) end
     local highestEnum = enums[table.GetWinningKey(enums)]
     local enum_bitcount = getBitsInNum(highestEnum)
@@ -49,5 +55,3 @@ function KEnumNetMsg(netstring,enums)
 
     return netMsgStart,netMsgReceiver
 end
-
---solarembra 9/1/2025

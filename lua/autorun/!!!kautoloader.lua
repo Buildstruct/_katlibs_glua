@@ -6,33 +6,33 @@ local function nop() end
 
 local fileActions
 if SERVER then
-    fileActions = {
-        sv = include,
-        cl = AddCSLuaFile,
-        sh = function(path)
-            AddCSLuaFile(path)
-            include(path)
-        end,
-    }
+	fileActions = {
+		sv = include,
+		cl = AddCSLuaFile,
+		sh = function(path)
+			AddCSLuaFile(path)
+			include(path)
+		end,
+	}
 elseif CLIENT then
-    fileActions = {
-        sv = nop,
-        cl = include,
-        sh = include,
-    }
+	fileActions = {
+		sv = nop,
+		cl = include,
+		sh = include,
+	}
 end
 
 local function addFile(file,directory,realm)
 	if not realm then realm = string.lower(string.Left(file, 2)) end
 
-    local action = fileActions[realm]
-    action(directory .. file)
+	local action = fileActions[realm]
+	action(directory .. file)
 end
 
 function KAutoLoader.IncludeDir(directory,optionalArgs)
-    local searchFolder = optionalArgs.SearchFolder or "LUA"
-    local realm = optionalArgs.Realm
-    if realm then assert(fileActions[realm] ~= nil,"argument #2, optionalArgs.Realm: expected \"sv\",\"cl\",\"sh\"") end
+	local searchFolder = optionalArgs.SearchFolder or "LUA"
+	local realm = optionalArgs.Realm
+	if realm then assert(fileActions[realm] ~= nil,"argument #2, optionalArgs.Realm: expected \"sv\",\"cl\",\"sh\"") end
 
 	directory = directory .. "/"
 	local files, directories = file.Find(directory .. "*",searchFolder)

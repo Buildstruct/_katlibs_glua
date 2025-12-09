@@ -47,11 +47,14 @@ if SERVER then
     util.AddNetworkString(NETSTRING_ENTREMOVED)
 
     function net.WriteKNWEntity(ent)
-        activeEnts[ent] = true
         n_WriteUInt(e_EntIndex(ent),13)
+        activeEnts[ent] = true
     end
 
     function KNWEntity.SendRemoveCall(ent,ply)
+        if not activeEnts[ent] then return end
+        KError.ValidateArg(2,"ply",KVarCondition.Player(ply))
+
         n_Start(NETSTRING_ENTREMOVED)
         n_WriteUInt(e_EntIndex(ent),13)
         n_Send(ply)
@@ -167,5 +170,3 @@ elseif CLIENT then
         hooks[eid] = nil
     end)
 end
-
---solarembra 9/1/2025

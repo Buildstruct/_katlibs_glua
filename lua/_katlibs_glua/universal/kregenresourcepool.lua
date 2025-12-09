@@ -6,6 +6,9 @@ local regenerating = setmetatable({},{__mode = "k"})
 local privTab = setmetatable({},{__mode = "k"})
 KRegenResourcePool = setmetatable({},{
     __call = function(_,max,regenRatePerSecond)
+        KError.ValidateArg(1,"max",KVarCondition.NumberGreaterOrEqual(max,0))
+        KError.ValidateArg(2,"regenRatePerSecond",KVarCondition.NumberGreaterOrEqual(regenRatePerSecond,0))
+
         local newObj = setmetatable({},{__index = KRegenResourcePool})
         privTab[newObj] = {
             Amount = max,
@@ -19,7 +22,7 @@ KRegenResourcePool = setmetatable({},{
 
 function KRegenResourcePool:Use(cost)
     local priv = privTab[self]
-    assert(isnumber(cost) and cost >= 0,"arg #1, cost: expected number >= 0")
+    KError.ValidateArg(1,"cost",KVarCondition.NumberGreaterOrEqual(cost,0))
 
     regenerating[priv] = true
     hook.Add("Tick","KRegenResourcePool",Tick_Regen)
@@ -40,14 +43,16 @@ function KRegenResourcePool:Count()
 end
 
 function KRegenResourcePool:SetHook(key,func)
-    if func ~= nil then assert(isfunction(func),"arg #2, func: expected function or nil") end
+    KError.ValidateArg(1,"key",KVarCondition.NotNull(key))
+    if func ~= nil then KError.ValidateArg(2,"func",KVarCondition.Function(func)) end
+
     privTab[self].Hooks[key] = func
 end
 
 function Tick_Regen()
     if not next(regenerating) then
         hook.Remove("Tick","KRegenResourcePool")
-        return 
+        return
     end
 
     for priv,_ in pairs(regenerating) do

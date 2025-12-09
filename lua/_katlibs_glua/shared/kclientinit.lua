@@ -71,5 +71,3 @@ elseif CLIENT then
 		if func then func() end
 	end)
 end
-
---solarembra 9/1/2025

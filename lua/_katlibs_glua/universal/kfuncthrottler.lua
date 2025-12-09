@@ -2,7 +2,7 @@ local privTab = setmetatable({},{__mode = "k"})
 
 KFuncThrottler = setmetatable({},{
     __call = function(_,limiter)
-        assert(getmetatable(limiter).__index == KRegenResourcePool,"arg #1, limiter: expected KRegenResourcePool")
+        KError.ValidateArg(1,"limiter",KVarCondition.TableMeta(limiter,KRegenResourcePool,"KRegenResourcePool"))
 
         local newObj = setmetatable({},{__index = KFuncThrottler})
         privTab[newObj] = {
@@ -13,18 +13,12 @@ KFuncThrottler = setmetatable({},{
     end,
 })
 
-local function tryExecute(priv,cost,func,...)
-    if not priv.Limiter:Use(cost) then return false end
-    func(...)
-    return true
-end
-
 function KFuncThrottler:Execute(cost,func,...)
     local priv = privTab[self]
     local limiter = priv.Limiter
     local max = priv.Limiter:GetMax()
-    assert(isnumber(cost) and cost <= max,string.format("arg #1, cost: expected number <= %i",max))
-    assert(isfunction(func),"arg #2, func: expected function")
+    KError.ValidateArg(1,"cost",KVarCondition.NumberInRange(cost,0,max))
+    KError.ValidateArg(2,"func",KVarCondition.Function(func))
 
     if limiter:Use(cost) then
         func(...)
@@ -41,10 +35,10 @@ function KFuncThrottler:Execute(cost,func,...)
             return
         end
 
-        local cost = queued[1]
-        if cost > currVal then return end
+        local currCost = queued[1]
+        if currCost > currVal then return end
 
-        limiter:Use(cost)
+        limiter:Use(currCost)
         queued[2](unpack(queued[3]))
         queue:PopLeft()
     end)
