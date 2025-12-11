@@ -7,7 +7,7 @@ local isentity = isentity
 local IsValid = IsValid
 local getmetatable = getmetatable
 local s_format = string.format
-local assert = assert
+local error = error
 
 KVarCondition = {
 	NotNull = function(val)
@@ -50,8 +50,16 @@ KVarCondition = {
 		return istable(val), "table"
 	end,
 
+	TableSequential = function(val)
+		return istable(val) and table.IsSequential(val), "sequential table"
+	end,
+
 	TableMeta = function(val,compare,typeName)
 		return istable(val) and getmetatable(val).__index == compare, typeName
+	end,
+
+	Bool = function(val)
+		return isbool(val), "bool"
 	end,
 
 	Function = function(val)
@@ -59,21 +67,24 @@ KVarCondition = {
 	end,
 
 	Entity = function(val)
-		return isentity(val) and IsValid(val), "entity"
+		return isentity(val) and IsValid(val), "valid entity"
 	end,
 
 	Player = function(val)
-		return isentity(val) and IsValid(val) and val:IsPlayer(), "player"
+		return isentity(val) and IsValid(val) and val:IsPlayer(), "valid player"
+	end,
+
+	Color = function(val)
+		return IsColor(val), "color"
 	end,
 }
 
 function KError.ValidateArg(index,name,result,expectation)
 	if result then return end
-	error(s_format("arg #%i, %s: expected %s.",index,name,expectation))
+	error(s_format("arg #%i, [%s]: expected [%s].",index,name,expectation))
 end
-local validateArg = KError.ValidateArg
 
-function KError.ValidateParameter(index,tableName,key,result,expectation)
-	assert(isstring(key),s_format("arg #%i, %s: expected key of type string, got %s.",index,tableName,key))
-	validateArg(index,s_format("%s[%s]",tableName,key),result,expectation)
+function KError.ValidateKVArg(index,name,kResult,kExpectation,vResult,vExpectation)
+	if kResult and vResult then return end
+	error(s_format("arg #%i, [%s]: expected key [%s], expected value [%s].",index,name,kExpectation,vExpectation))
 end
