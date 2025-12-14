@@ -7,16 +7,9 @@ Purpose:
 Quick and convenient sync the client with the server on choice data.
 Has a hook to know when it's safe to assume the client is up to date.
 
-SERVER:
-    Functions:
-        void KClientInit.SendClientData(string key,function netmsg)
-
-	Hooks:
-		kat_OnClientInit(Player ply)
-
-CLIENT:
-    Functions:
-        void KClientInit.ReceiveServerData(string key,function netmsg)
+SERVER hook KOnClientInit()
+SERVER delegate void KClientInit.SendClientData(any key,function cb)
+CLIENT delegate void KClientInit.ReceiveServerData(any key,function cb)
 ]]
 
 local NETSTRING = "KClientInit"
@@ -43,7 +36,7 @@ if SERVER then
 		if alreadyLoaded[ply] then return end
 		alreadyLoaded[ply] = true
 
-		h_Run("kat_OnClientInit",ply)
+		h_Run("KOnClientInit",ply)
 
 		for key,func in pairs(receivers) do
 			n_Start(NETSTRING)
