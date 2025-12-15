@@ -1,12 +1,21 @@
+if KQueue then return end
+
 local privTab = setmetatable({},{__mode = "k"})
+
+---@class KQueue
+---@overload fun(): KQueue
+---@return KQueue KQueue
+---A queue data structure.
 KQueue = setmetatable({},{
     __call = function()
         local newObj = setmetatable({},{__index = KQueue})
+
         privTab[newObj] = {
             first = 0,
             last = -1,
             empty = true,
         }
+
         return newObj
     end,
 })
@@ -83,6 +92,7 @@ end
 
 local noOp = function() return nil end
 
+---Returns an iterator function for this queue.
 function KQueue:Iterator()
     local priv = privTab[self]
 
