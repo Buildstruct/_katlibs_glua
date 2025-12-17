@@ -48,8 +48,9 @@ function KAutoLoader.IncludeDir(directory,params)
 
 	KError.ValidateArg(1,"directory",KVarCondition.StringNotEmpty(directory))
 
-	local searchFolder = params.SearchFolder or "LUA"
-	KError.ValidateArg(2,"params.SearchFolder",KVarCondition.StringNotEmpty(searchFolder))
+	local searchFolder = "LUA" --TODO: CompileString
+	--local searchFolder = params.SearchFolder or "LUA"
+	--KError.ValidateArg(2,"params.SearchFolder",KVarCondition.StringNotEmpty(searchFolder))
 
 	local realm = params.Realm
 	if realm then KError.ValidateArg(2,"params.Realm",AssertValidRealm(realm)) end
