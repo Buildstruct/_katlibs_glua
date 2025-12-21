@@ -35,8 +35,6 @@ function KQueue:Count()
 end
 
 function KQueue:PushLeft(value)
-    KError.ValidateArg(1,"value",KVarCondition.NotNull(value))
-
     local priv = privTab[self]
 
     local first = priv.first - 1
@@ -45,8 +43,6 @@ function KQueue:PushLeft(value)
 end
 
 function KQueue:PushRight(value)
-    KError.ValidateArg(1,"value",KVarCondition.NotNull(value))
-
     local priv = privTab[self]
 
     local last = priv.last + 1
