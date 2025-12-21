@@ -1,5 +1,3 @@
-if KAutoLoader then return end
-
 AddCSLuaFile()
 
 KAutoLoader = {}
@@ -24,10 +22,6 @@ elseif CLIENT then
 	}
 end
 
-local function AssertValidRealm(val)
-	return {fileActions[val] ~= nil,"\"sv\", \"cl\", \"sh\""}
-end
-
 local function addFile(file,directory,realm)
 	if not realm then realm = string.lower(string.Left(file, 2)) end
 
@@ -35,27 +29,10 @@ local function addFile(file,directory,realm)
 	action(directory .. file)
 end
 
----Include all lua files in a directory<br>
----
----params:
---- - string? SearchFolder
---- - string? Realm [sv, cl, sh]
---- - bool? Recursive
----@param directory string
----@param params table?
-function KAutoLoader.IncludeDir(directory,params)
-	params = params or {}
-
-	KError.ValidateArg(1,"directory",KVarCondition.StringNotEmpty(directory))
-
-	local searchFolder = params.SearchFolder or "LUA"
-	KError.ValidateArg(2,"params.SearchFolder",KVarCondition.StringNotEmpty(searchFolder))
-
-	local realm = params.Realm
-	if realm then KError.ValidateArg(2,"params.Realm",AssertValidRealm(realm)) end
-
-	local recursive = params.Recursive == nil and true or false
-	KError.ValidateArg(2,"params.Recursive",KVarCondition.Bool(recursive))
+function KAutoLoader.IncludeDir(directory,optionalArgs)
+	local searchFolder = optionalArgs.SearchFolder or "LUA"
+	local realm = optionalArgs.Realm
+	if realm then assert(fileActions[realm] ~= nil,"argument #2, optionalArgs.Realm: expected \"sv\",\"cl\",\"sh\"") end
 
 	directory = directory .. "/"
 	local files, directories = file.Find(directory .. "*",searchFolder)
@@ -65,14 +42,12 @@ function KAutoLoader.IncludeDir(directory,params)
 		addFile(v,directory,realm)
 	end
 
-	if not recursive then return end
-
 	for _,v in ipairs(directories) do
-		KAutoLoader.IncludeDir(directory .. v,params)
+		KAutoLoader.IncludeDir(directory .. v,optionalArgs)
 	end
 end
 
-KAutoLoader.IncludeDir("_katlibs_glua/universal",{Realm = "sh",Recursive = false})
-KAutoLoader.IncludeDir("_katlibs_glua/shared",{Realm = "sh",Recursive = false})
-KAutoLoader.IncludeDir("_katlibs_glua/server",{Realm = "sv",Recursive = false})
-KAutoLoader.IncludeDir("_katlibs_glua/client",{Realm = "cl",Recursive = false})
+KAutoLoader.IncludeDir("_katlibs_glua/universal",{Realm = "sh"})
+KAutoLoader.IncludeDir("_katlibs_glua/shared",{Realm = "sh"})
+KAutoLoader.IncludeDir("_katlibs_glua/server",{Realm = "sv"})
+KAutoLoader.IncludeDir("_katlibs_glua/client",{Realm = "cl"})
