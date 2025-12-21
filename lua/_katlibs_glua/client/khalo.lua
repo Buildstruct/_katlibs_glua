@@ -1,3 +1,7 @@
+if KHalo then return end
+
+---CLIENT, STATIC<br>
+---HaloEx library refactor.
 KHalo = {}
 
 local c_Start3D = cam.Start3D
@@ -63,6 +67,22 @@ end)
 
 local halos = {}
 
+---CLIENT<br>
+---Register a KHalo to the render stack.<br>
+---
+---params:
+--- - sequential Entity[] Ents
+--- - bool? Hidden = false
+--- - bool? Additive = false
+--- - bool? IgnoreZ = false
+--- - number? BlurX = 2 [0..]
+--- - number? BlurY = 2 [0..]
+--- - number? SphericalSize = 1 [0..]
+--- - number? Shape = 1 [0..]
+--- - number? DrawPasses = 1 [0,32]
+--- - number? Amount = 1 [0,32]
+---@param key any
+---@param params table
 function KHalo.Add(key,params)
 	KError.ValidateArg(1,"key",KVarCondition.NotNull(key))
 	KError.ValidateArg(2,"params",KVarCondition.Table(params))
@@ -108,10 +128,15 @@ function KHalo.Add(key,params)
 	hook.Add("PostDrawEffects","RenderKHalos",drawHaloHook)
 end
 
+---CLIENT<br>
+---Unregister a KHalo from the render stack.
 function KHalo.Remove(key)
 	halos[key] = nil
 end
 
+---CLIENT<br>
+---Add a entity to a registered KHalo.
+---@param ent Entity
 function KHalo.AddEnt(key,ent)
 	KError.ValidateArg(1,"key",KVarCondition.NotNull(key))
 	local tab = halos[key]
@@ -121,6 +146,9 @@ function KHalo.AddEnt(key,ent)
 	tab.Ents[ent] = true
 end
 
+---CLIENT<br>
+---Remove a entity from a registered KHalo.
+---@param ent Entity
 function KHalo.RemoveEnt(key,ent)
 	KError.ValidateArg(1,"key",KVarCondition.NotNull(key))
 	local tab = halos[key]

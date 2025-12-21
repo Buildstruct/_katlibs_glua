@@ -1,16 +1,11 @@
 if KClientInit then return end
+
+---SHARED, STATIC<br>
+---Quick and convenient sync the client with the server on choice data.<br>
+---
+---Hooks:
+--- - KOnClientInit(Player ply)
 KClientInit = {}
-AddCSLuaFile()
-
---[[ DOCS:
-Purpose:
-Quick and convenient sync the client with the server on choice data.
-Has a hook to know when it's safe to assume the client is up to date.
-
-SERVER hook KOnClientInit()
-SERVER delegate void KClientInit.SendClientData(any key,function cb)
-CLIENT delegate void KClientInit.ReceiveServerData(any key,function cb)
-]]
 
 local NETSTRING = "KClientInit"
 
@@ -46,7 +41,15 @@ if SERVER then
 		end
 	end)
 
+	---SERVER<br>
+	---Register a netcode callback to send to the client when it initializes.<br>
+	---Do not start or send net, it is automatically handled.
+	---@param key string
+	---@param func function
 	function KClientInit.SendClientData(key,func)
+		KError.ValidateArg(1,"key",KVarCondition.String(key))
+		KError.ValidateArg(2,"func",KVarCondition.Function(func))
+
 		receivers[key] = func
 	end
 elseif CLIENT then
@@ -55,7 +58,15 @@ elseif CLIENT then
 		n_SendToServer()
 	end)
 
+	---CLIENT<br>
+	---Register a netcode callback to receive from the server when it initializes.<br>
+	---Do not start or send net, it is automatically handled.
+	---@param key string
+	---@param func function
 	function KClientInit.ReceiveServerData(key,func)
+		KError.ValidateArg(1,"key",KVarCondition.String(key))
+		KError.ValidateArg(2,"func",KVarCondition.Function(func))
+
 		receivers[key] = func
 	end
 

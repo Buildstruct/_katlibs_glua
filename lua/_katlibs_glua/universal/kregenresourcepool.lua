@@ -1,9 +1,16 @@
-local m_min = math.min
+if KRegenResourcePool then return end
 
+local m_min = math.min
 local Tick_Regen
+
 local regenerating = setmetatable({},{__mode = "k"})
 
 local privTab = setmetatable({},{__mode = "k"})
+
+---@class KRegenResourcePool
+---A number value that regenerates over time and can be used.
+---@overload fun(max: number, regenRatePerSecond: number): KRegenResourcePool
+---@return KRegenResourcePool KRegenResourcePool
 KRegenResourcePool = setmetatable({},{
     __call = function(_,max,regenRatePerSecond)
         KError.ValidateArg(1,"max",KVarCondition.NumberGreaterOrEqual(max,0))
@@ -16,10 +23,14 @@ KRegenResourcePool = setmetatable({},{
             RegenRatePerTick = regenRatePerSecond * engine.TickInterval(),
             Hooks = {},
         }
+
         return newObj
     end,
 })
 
+---Uses the resource pool with the specified cost.
+---@param cost number
+---@return boolean success
 function KRegenResourcePool:Use(cost)
     local priv = privTab[self]
     KError.ValidateArg(1,"cost",KVarCondition.NumberGreaterOrEqual(cost,0))
@@ -34,14 +45,22 @@ function KRegenResourcePool:Use(cost)
     return true
 end
 
+---Gets the maximum value of this resource pool.
+---@return number max
 function KRegenResourcePool:GetMax()
     return privTab[self].Max
 end
 
+---Gets the current value of this resource pool.
+---@return number value
 function KRegenResourcePool:Count()
     return privTab[self].Amount
 end
 
+---Adds a hook to this resource pool.<br>
+---Automatically clears if this object is garbage collected.
+---@param key any
+---@param func function
 function KRegenResourcePool:SetHook(key,func)
     KError.ValidateArg(1,"key",KVarCondition.NotNull(key))
     if func ~= nil then KError.ValidateArg(2,"func",KVarCondition.Function(func)) end
