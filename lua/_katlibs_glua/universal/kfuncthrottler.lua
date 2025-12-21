@@ -1,11 +1,5 @@
-if KFuncThrottler then return end
-
 local privTab = setmetatable({},{__mode = "k"})
 
----@class KFuncThrottler
----@overload fun(limiter: KRegenResourcePool): KFuncThrottler
----@return KFuncThrottler KQueue
----Controls how fast a function is executed based on a resource.
 KFuncThrottler = setmetatable({},{
     __call = function(_,limiter)
         KError.ValidateArg(1,"limiter",KVarCondition.TableMeta(limiter,KRegenResourcePool,"KRegenResourcePool"))
@@ -15,16 +9,10 @@ KFuncThrottler = setmetatable({},{
             Limiter = limiter,
             Queue = KQueue(),
         }
-
         return newObj
     end,
 })
 
----Attempt to execute a function.<br>
----If resources do not allow, the function will instead be queued for when the resources are available.
----@param cost number
----@param func function
----@param ... any Arguments to pass.
 function KFuncThrottler:Execute(cost,func,...)
     local priv = privTab[self]
     local limiter = priv.Limiter
