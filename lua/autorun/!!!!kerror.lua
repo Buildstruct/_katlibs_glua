@@ -1,5 +1,7 @@
 if KError then return end
 
+AddCSLuaFile()
+
 KError = {}
 
 local isnumber = isnumber
