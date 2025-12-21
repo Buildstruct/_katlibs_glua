@@ -96,6 +96,12 @@ elseif CLIENT then
         return newObj
     end
 
+    local function callHooks(priv,hooktype,...)
+        for _,func in pairs(priv.Hooks[hooktype]) do
+            func(...)
+        end
+    end
+
     ---CLIENT<br>
     ---Reads a KNWEntity from a net message.
     ---@returns KNWEntity KNWEntity
@@ -117,7 +123,7 @@ elseif CLIENT then
             local priv = privTab[knwEnt]
 
             priv.Active = true
-            priv.Hooks.OnInitialize(eid,ent)
+            callHooks(priv,"OnInitialize",eid,ent)
         end)
 
         return knwEnt
@@ -172,7 +178,7 @@ elseif CLIENT then
         if priv.Active then return end
 
         priv.Active = true
-        priv.Hooks.OnInitialize(eid,ent)
+        callHooks(priv,"OnInitialize",eid,ent)
     end)
 
     hook.Add("EntityRemoved","KNWEntity",function(ent)
@@ -184,7 +190,7 @@ elseif CLIENT then
         if not priv.Active then return end
 
         priv.Active = false
-        priv.Hooks.OnDeinitialize(eid)
+        callHooks(priv,"OnDeinitialize",eid)
     end)
 
     net.Receive(NETSTRING_ENTREMOVED, function()
@@ -194,7 +200,7 @@ elseif CLIENT then
 
         local priv = privTab[knwEnt]
 
-        priv.Hooks.OnRemove(eid)
+        callHooks(priv,"OnRemove",eid)
         activeEnts[eid] = nil
     end)
 end
