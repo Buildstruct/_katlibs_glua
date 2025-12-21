@@ -20,8 +20,8 @@ end
 ---
 ---the only moral action is the minimization of NW slots - sun tzu
 ---@param netstring string
----@return function netMsgStart(number messageEnum)
----@return function netMsgReceiver(number messageEnum, function callback)
+---@return fun(messageEnum: number) netMsgStart
+---@return fun(messageEnum: number, func: function) netMsgReceiver
 function KEnumNetMsg(netstring,enums)
     KError.ValidateArg(1,"netstring",KVarCondition.StringNotEmpty(netstring))
     KError.ValidateArg(2,"enums",KVarCondition.Table(enums))
