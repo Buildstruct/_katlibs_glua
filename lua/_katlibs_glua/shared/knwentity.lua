@@ -88,7 +88,7 @@ elseif CLIENT then
             Active = false,
             Hooks = {
                 OnInitialize = {},
-                OnDenitialize = {},
+                OnDeinitialize = {},
                 OnRemove = {},
             },
         }
