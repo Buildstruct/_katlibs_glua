@@ -88,16 +88,16 @@ elseif CLIENT then
             Active = false,
             Hooks = {
                 OnInitialize = {},
-                OnDeinitialize = {},
                 OnRemove = {},
             },
         }
+        activeEnts[eid] = newObj
 
         return newObj
     end
 
     local function callHooks(priv,hooktype,...)
-        for _,func in pairs(priv.Hooks[hooktype]) do
+        for k,func in pairs(priv.Hooks[hooktype]) do
             func(...)
         end
     end
@@ -157,7 +157,6 @@ elseif CLIENT then
     ---Register a hook with this KNWEntity.
     ---Hooks:
     --- - OnInitialize(number entIndex, Entity ent)
-    --- - OnDeinitialize(number entIndex)
     --- - OnRemove(number entIndex)
     function KNWEntity:AddHook(hooktype,id,func)
         KError.ValidateArg(3,"func",KVarCondition.Function(func))
@@ -175,22 +174,7 @@ elseif CLIENT then
         if not knwEnt then return end
 
         local priv = privTab[knwEnt]
-        if priv.Active then return end
-
-        priv.Active = true
         callHooks(priv,"OnInitialize",eid,ent)
-    end)
-
-    hook.Add("EntityRemoved","KNWEntity",function(ent)
-        local eid = e_EntIndex(ent)
-        local knwEnt = activeEnts[eid]
-        if not knwEnt then return end
-
-        local priv = privTab[knwEnt]
-        if not priv.Active then return end
-
-        priv.Active = false
-        callHooks(priv,"OnDeinitialize",eid)
     end)
 
     net.Receive(NETSTRING_ENTREMOVED, function()
@@ -201,7 +185,7 @@ elseif CLIENT then
         local priv = privTab[knwEnt]
 
         callHooks(priv,"OnRemove",eid)
-        privTab[knwEnt] = nil
         activeEnts[eid] = nil
+        privTab[knwEnt] = nil
     end)
 end
