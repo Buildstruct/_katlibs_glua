@@ -201,6 +201,7 @@ elseif CLIENT then
         local priv = privTab[knwEnt]
 
         callHooks(priv,"OnRemove",eid)
+        privTab[knwEnt] = nil
         activeEnts[eid] = nil
     end)
 end
