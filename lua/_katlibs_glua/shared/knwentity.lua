@@ -1,21 +1,8 @@
-if KNWEntity then return end
-
 local activeEnts = {}
-
----@class KNWEntity
----CLIENT<br>
----A clientside entity registry that is accessible even if the entity is invalid (not networked; out of PVS.)<br>
----Contains hook methods that act as convenient callbacks on entity clientside initialization, clientside deinitialization, and serverside removal.
----@overload fun(entIndex: number): KNWEntity
----@return KNWEntity KNWEntity
-KNWEntity = setmetatable({},{__call = function(_,eid)
-    return activeEnts[eid]
-end})
 
 local n_Start = net.Start
 local n_WriteUInt = net.WriteUInt
 local n_ReadUInt = net.ReadUInt
-local n_Send = net.Send
 local n_Broadcast = net.Broadcast
 local IsValid = IsValid
 local t_Simple = timer.Simple
@@ -39,34 +26,21 @@ if SERVER then
         activeEnts[ent] = true
     end
 
-    ---SERVER<br>
-    ---Manually call the OnRemove hook on a clientside KNWEntity.<br>
-    ---Sends to a specific player.
-    ---@param ent Entity
-    ---@param ply Player
-    function KNWEntity.SendRemoveCall(ent,ply)
-        if not activeEnts[ent] then return end
-        KError.ValidateArg(2,"ply",KVarCondition.Player(ply))
-
-        n_Start(NETSTRING_ENTREMOVED)
-        n_WriteUInt(e_EntIndex(ent),13)
-        n_Send(ply)
-    end
-
-    ---SERVER<br>
-    ---Manually call the OnRemove hook on a clientside KNWEntity.<br>
-    ---Broadcasts to all players.
-    ---@param ent Entity
-    function KNWEntity.BroadcastRemoveCall(ent)
+    hook.Add("EntityRemoved","KNWEntity",function(ent)
         if not activeEnts[ent] then return end
         activeEnts[ent] = nil
 
         n_Start(NETSTRING_ENTREMOVED)
         n_WriteUInt(e_EntIndex(ent),13)
         n_Broadcast()
-    end
-    hook.Add("EntityRemoved","KNWEntity",KNWEntity.BroadcastRemoveCall)
+    end)
 elseif CLIENT then
+    local function callHooks(priv,hooktype,...)
+        for _,func in pairs(priv.Hooks[hooktype]) do
+            func(...)
+        end
+    end
+
     ---CLIENT<br>
     ---Gets an entity's KNWEntity.
     ---@returns KNWEntity
@@ -75,7 +49,9 @@ elseif CLIENT then
     end
 
     ---private constructor
-    local _KNWEntity,getPriv = KClass(function(eid)
+    ---@class KNWEntity
+    ---@returns KNWEntity
+    local KNWEntity,getPriv = KClass(function(eid)
         return {
             EntIndex = eid,
             NWTime = SysTime(),
@@ -87,12 +63,6 @@ elseif CLIENT then
             },
         }
     end)
-
-    local function callHooks(priv,hooktype,...)
-        for _,func in pairs(priv.Hooks[hooktype]) do
-            func(...)
-        end
-    end
 
     ---CLIENT<br>
     ---Reads a KNWEntity from a net message.
@@ -106,7 +76,7 @@ elseif CLIENT then
             return knwEnt
         end
 
-        knwEnt = _KNWEntity(eid)
+        knwEnt = KNWEntity(eid)
         activeEnts[eid] = knwEnt
 
         t_Simple(0,function()
