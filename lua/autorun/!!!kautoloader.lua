@@ -38,7 +38,6 @@ end
 ---Include all lua files in a directory<br>
 ---
 ---params:
---- - string? SearchFolder
 --- - string? Realm [sv, cl, sh]
 --- - bool? Recursive
 ---@param directory string
@@ -48,10 +47,6 @@ function KAutoLoader.IncludeDir(directory,params)
 
 	KError.ValidateArg(1,"directory",KVarCondition.StringNotEmpty(directory))
 
-	local searchFolder = "LUA" --TODO: CompileString
-	--local searchFolder = params.SearchFolder or "LUA"
-	--KError.ValidateArg(2,"params.SearchFolder",KVarCondition.StringNotEmpty(searchFolder))
-
 	local realm = params.Realm
 	if realm then KError.ValidateArg(2,"params.Realm",AssertValidRealm(realm)) end
 
@@ -59,7 +54,7 @@ function KAutoLoader.IncludeDir(directory,params)
 	KError.ValidateArg(2,"params.Recursive",KVarCondition.Bool(recursive))
 
 	directory = directory .. "/"
-	local files, directories = file.Find(directory .. "*",searchFolder)
+	local files, directories = file.Find(directory .. "*","LUA")
 
 	for _,v in ipairs(files) do
 		if not string.EndsWith(v,".lua") then continue end
