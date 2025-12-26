@@ -1,33 +1,25 @@
 if KQueue then return end
 
-local privTab = setmetatable({},{__mode = "k"})
-
 ---@class KQueue
 ---@overload fun(): KQueue
 ---@return KQueue KQueue
 ---A queue data structure.
-KQueue = setmetatable({},{
-    __call = function()
-        local newObj = setmetatable({},{__index = KQueue})
-
-        privTab[newObj] = {
-            first = 0,
-            last = -1,
-            empty = true,
-        }
-
-        return newObj
-    end,
-})
+KQueue,getPriv = KClass(function()
+    return {
+        first = 0,
+        last = -1,
+        empty = true,
+    }
+end)
 
 function KQueue:Any()
-    local priv = privTab[self]
+    local priv = getPriv(self)
 
     return priv.first <= priv.last
 end
 
 function KQueue:Count()
-    local priv = privTab[self]
+    local priv = getPriv(self)
 
     local ct = priv.last - priv.first
     if ct < 0 then return 0 end
@@ -35,7 +27,7 @@ function KQueue:Count()
 end
 
 function KQueue:PushLeft(value)
-    local priv = privTab[self]
+    local priv = getPriv(self)
 
     local first = priv.first - 1
     priv.first = first
@@ -43,7 +35,7 @@ function KQueue:PushLeft(value)
 end
 
 function KQueue:PushRight(value)
-    local priv = privTab[self]
+    local priv = getPriv(self)
 
     local last = priv.last + 1
     priv.last = last
@@ -51,19 +43,19 @@ function KQueue:PushRight(value)
 end
 
 function KQueue:GetLeft()
-    local priv = privTab[self]
+    local priv = getPriv(self)
 
     return priv[priv.first]
 end
 
 function KQueue:GetRight()
-    local priv = privTab[self]
+    local priv = getPriv(self)
 
     return priv[priv.last]
 end
 
 function KQueue:PopLeft()
-    local priv = privTab[self]
+    local priv = getPriv(self)
 
     local first = priv.first
     assert(priv.first <= priv.last,"list empty")
@@ -75,7 +67,7 @@ function KQueue:PopLeft()
 end
 
 function KQueue:PopRight()
-    local priv = privTab[self]
+    local priv = getPriv(self)
 
     local last = priv.last
     assert(priv.first <= priv.last,"list empty")
@@ -90,7 +82,7 @@ local noOp = function() return nil end
 
 ---Returns an iterator function for this queue.
 function KQueue:Iterator()
-    local priv = privTab[self]
+    local priv = getPriv(self)
 
     if priv.first > priv.last then return noOp end
 

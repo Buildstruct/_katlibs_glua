@@ -67,8 +67,6 @@ if SERVER then
     end
     hook.Add("EntityRemoved","KNWEntity",KNWEntity.BroadcastRemoveCall)
 elseif CLIENT then
-    local privTab = setmetatable({},{__mode = "k"})
-
     ---CLIENT<br>
     ---Gets an entity's KNWEntity.
     ---@returns KNWEntity
@@ -77,11 +75,8 @@ elseif CLIENT then
     end
 
     ---private constructor
-    ---@param eid number
-    local function registerNewKNWEntity(eid)
-        local newObj = setmetatable({},{__index = KNWEntity})
-
-        privTab[newObj] = {
+    local _KNWEntity,getPriv = KClass(function(eid)
+        return {
             EntIndex = eid,
             NWTime = SysTime(),
             IsFirstTimeNetworked = true,
@@ -91,13 +86,10 @@ elseif CLIENT then
                 OnRemove = {},
             },
         }
-        activeEnts[eid] = newObj
-
-        return newObj
-    end
+    end)
 
     local function callHooks(priv,hooktype,...)
-        for k,func in pairs(priv.Hooks[hooktype]) do
+        for _,func in pairs(priv.Hooks[hooktype]) do
             func(...)
         end
     end
@@ -110,17 +102,18 @@ elseif CLIENT then
         local knwEnt = activeEnts[eid]
 
         if knwEnt then
-            privTab[knwEnt].IsFirstTimeNetworked = false
+            getPriv(knwEnt).IsFirstTimeNetworked = false
             return knwEnt
         end
 
-        knwEnt = registerNewKNWEntity(eid)
+        knwEnt = _KNWEntity(eid)
+        activeEnts[eid] = knwEnt
 
         t_Simple(0,function()
             local ent = Entity(eid)
             if not IsValid(ent) then return end
 
-            local priv = privTab[knwEnt]
+            local priv = getPriv(knwEnt)
 
             priv.Active = true
             callHooks(priv,"OnInitialize",eid,ent)
@@ -132,25 +125,25 @@ elseif CLIENT then
     ---CLIENT<br>
     ---Gets an KNWEntity's Entity.
     function KNWEntity:GetEntity()
-        return Entity(privTab[self].EntIndex)
+        return Entity(getPriv(self).EntIndex)
     end
 
     ---CLIENT<br>
     ---Gets an KNWEntity's entity index.
     function KNWEntity:EntIndex()
-        return privTab[self].EntIndex
+        return getPriv(self).EntIndex
     end
 
     ---CLIENT<br>
     ---Returns the time in seconds since this KNWEntity was registered.
     function KNWEntity:GetNWLifetime()
-        return SysTime() - privTab[self].NWTime
+        return SysTime() - getPriv(self).NWTime
     end
 
     ---CLIENT<br>
     ---Returns if this KNWEntity has only been registered once.
     function KNWEntity:IsFirstTimeNetworked()
-        return privTab[self].IsFirstTimeNetworked
+        return getPriv(self).IsFirstTimeNetworked
     end
 
     ---CLIENT<br>
@@ -161,7 +154,7 @@ elseif CLIENT then
     function KNWEntity:AddHook(hooktype,id,func)
         KError.ValidateArg(3,"func",KVarCondition.Function(func))
 
-        local hookTab = privTab[self].Hooks[hooktype]
+        local hookTab = getPriv(self).Hooks[hooktype]
         if not hookTab then return end
         hookTab[id] = func
     end
@@ -173,8 +166,7 @@ elseif CLIENT then
         local knwEnt = activeEnts[eid]
         if not knwEnt then return end
 
-        local priv = privTab[knwEnt]
-        callHooks(priv,"OnInitialize",eid,ent)
+        callHooks(getPriv(knwEnt),"OnInitialize",eid,ent)
     end)
 
     net.Receive(NETSTRING_ENTREMOVED, function()
@@ -182,10 +174,11 @@ elseif CLIENT then
         local knwEnt = activeEnts[eid]
         if not knwEnt then return end
 
-        local priv = privTab[knwEnt]
+        ---@class table
+        local priv = getPriv(knwEnt)
 
         callHooks(priv,"OnRemove",eid)
         activeEnts[eid] = nil
-        privTab[knwEnt] = nil
+        table.Empty(priv)
     end)
 end
