@@ -9,7 +9,7 @@ local regenerating = setmetatable({},{__mode = "k"})
 ---A number value that regenerates over time and can be used.
 ---@overload fun(max: number, regenRatePerSecond: number): KRegenResourcePool
 ---@return KRegenResourcePool KRegenResourcePool
-KRegenResourcePool,getPriv = KClass(function(_,max,regenRatePerSecond)
+KRegenResourcePool,getPriv = KClass(function(max,regenRatePerSecond)
     KError.ValidateArg(1,"max",KVarCondition.NumberGreaterOrEqual(max,0))
     KError.ValidateArg(2,"regenRatePerSecond",KVarCondition.NumberGreaterOrEqual(regenRatePerSecond,0))
 
