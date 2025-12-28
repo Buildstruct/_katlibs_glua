@@ -5,7 +5,7 @@ local classes = setmetatable({},{__mode = "k"})
 ---@param constructor fun(...): table?
 ---@param inherit table?
 ---@return table class The newly defined class
----@return fun(table): table? getPriv A getter for the class's private table
+---@return fun(privTab : table): table? getPriv A getter for the class's private table
 KClass = function(constructor,inherit)
 	constructor = constructor or function(...) end
 	KError.ValidateArg(1,"constructor",KVarCondition.Function(constructor))

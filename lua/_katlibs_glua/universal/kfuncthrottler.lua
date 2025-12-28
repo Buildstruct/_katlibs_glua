@@ -1,5 +1,6 @@
 if KFuncThrottler then return end
 
+local getPriv
 ---@class KFuncThrottler
 ---@overload fun(limiter: KRegenResourcePool): KFuncThrottler
 ---@return KFuncThrottler KQueue

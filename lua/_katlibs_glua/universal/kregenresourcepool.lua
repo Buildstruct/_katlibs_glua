@@ -5,6 +5,7 @@ local Tick_Regen
 
 local regenerating = setmetatable({},{__mode = "k"})
 
+local getPriv
 ---@class KRegenResourcePool
 ---A number value that regenerates over time and can be used.
 ---@overload fun(max: number, regenRatePerSecond: number): KRegenResourcePool

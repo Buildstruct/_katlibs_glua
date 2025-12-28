@@ -1,5 +1,6 @@
 if KQueue then return end
 
+local getPriv
 ---@class KQueue
 ---@overload fun(): KQueue
 ---@return KQueue KQueue
