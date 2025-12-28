@@ -26,12 +26,12 @@ function KFuncThrottler:Execute(cost,func,...)
     KError.ValidateArg(1,"cost",KVarCondition.NumberInRange(cost,0,max))
     KError.ValidateArg(2,"func",KVarCondition.Function(func))
 
-    if limiter:Use(cost) then
+    local queue = priv.Queue
+
+    if not queue:Any() and limiter:Use(cost) then
         func(...)
         return
     end
-
-    local queue = priv.Queue
 
     queue:PushRight({cost,func,{...}})
     limiter:SetHook(self,function(currVal)
