@@ -1,3 +1,5 @@
+if KNetStream then return end
+
 local MAX_BYTES_PER_SECOND = 10e3
 
 local NETSTRING = "KNetStream"
@@ -26,7 +28,7 @@ do
     local function sendChunk(chunk,players)
         net.Start(NETSTRING)
         net.WriteBool(false)
-        net.WriteString(chunk)
+        net.WriteData(chunk)
         netSend(players)
     end
 
@@ -50,7 +52,6 @@ do
 
         for i = 0, numChunks - 1 do
             local chunkSize = math.min(dataSize,MAX_BYTES_PER_SECOND)
-
             local curr = MAX_BYTES_PER_SECOND * i
             local chunk = data:sub(curr + 1, curr + chunkSize)
             netThrottler:Execute(chunkSize,sendChunk,chunk,players)
@@ -73,15 +74,16 @@ do
 
     local streamData = {}
     local function getStreamData(ply)
-        return SERVER and streamData[ply] or streamData
+        if SERVER then return streamData[ply] end
+        return streamData
     end
 
     local function setStreamData(tab,ply)
-        if SERVER then streamData[ply] = tab end
+        if SERVER then streamData[ply] = tab return end
         streamData = tab
     end
 
-    net.Receive(NETSTRING,function(_,ply)
+    net.Receive(NETSTRING,function(len,ply)
         local header = net.ReadBool()
         if header then
             local id = net.ReadString()
@@ -97,10 +99,9 @@ do
             if not data then return end
 
             local chunks = data.Chunks
-            local chunk = net.ReadString()
+            local chunk = net.ReadData((len - 1) / 8)
 
             table.insert(chunks,chunk)
-
             if #chunks >= data.NumChunks then
                 local cb = receivers[data.ID]
                 if cb then cb(table.concat(chunks),ply) end
