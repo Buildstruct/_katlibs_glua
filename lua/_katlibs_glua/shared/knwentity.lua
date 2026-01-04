@@ -48,12 +48,12 @@ elseif CLIENT then
         return activeEnts[e_EntIndex(self)]
     end
 
-    local getPriv
-    ---private constructor
+    local getPriv,instantiate
+    ---A KNWEntity. Recommended not to call the constructor.
     ---@class KNWEntity
     ---@overload fun(eid : number): KNWEntity
     ---@returns KNWEntity
-    KNWEntity,getPriv = KClass(function(eid)
+    KNWEntity,getPriv,instantiate = KClass(function(eid)
         local exists = activeEnts[eid]
         if exists then return getPriv(exists) end
 
@@ -67,7 +67,7 @@ elseif CLIENT then
                 OnRemove = {},
             },
         }
-    end)
+    end,nil,true)
 
     ---CLIENT<br>
     ---Reads a KNWEntity from a net message.
@@ -83,7 +83,7 @@ elseif CLIENT then
             return knwEnt
         end
 
-        knwEnt = KNWEntity(eid)
+        knwEnt = instantiate(eid)
         activeEnts[eid] = knwEnt
 
         t_Simple(0,function()
