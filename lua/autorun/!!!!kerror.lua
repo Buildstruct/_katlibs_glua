@@ -81,6 +81,14 @@ KVarCondition = {
 	Color = function(val)
 		return {IsColor(val), "color"}
 	end,
+
+	Vector = function(val)
+		return {isvector(val), "Vector"}
+	end,
+
+	Angle = function(val)
+		return {isangle(val), "Angle"}
+	end,
 }
 
 ---Validate function argument.
