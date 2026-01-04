@@ -5,12 +5,7 @@ local currObj
 ---@class KClass
 ---OOP implementation<br>
 ---Constructor returns initial table of private fields.
----@param constructor fun(...): table?
----@param inherit table?
----@param privateConstructor boolean?
----@return table class The newly defined class
----@return fun(privTab : table): table? getPriv A getter for the class's private table
----@return fun(privTab : table): table instantiate A factory for a new object
+---@overload fun(constructor: (fun(...): table?), inherit: table?, privateConstructor : boolean?) : (table, (fun(obj : table): table?), fun(...): table)
 KClass = setmetatable({},{
 	__call = function(_,constructor,inherit,privateConstructor)
 		constructor = constructor or function(...) end
