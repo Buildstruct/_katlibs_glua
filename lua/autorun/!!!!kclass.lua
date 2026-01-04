@@ -36,7 +36,7 @@ KClass = function(constructor,inherit,privateConstructor)
 		__call = (privateConstructor ~= nil) and instantiate or nil,
 	})
 
-	function instantiate(...) return instantiate(_,...) end
+	function instantiate(...) return constructor(_,...) end
 
 	return class,getPriv,instantiate
 end
