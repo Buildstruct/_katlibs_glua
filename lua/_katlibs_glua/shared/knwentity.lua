@@ -48,11 +48,15 @@ elseif CLIENT then
         return activeEnts[e_EntIndex(self)]
     end
 
+    local getPriv
     ---private constructor
     ---@class KNWEntity
     ---@overload fun(eid : number): KNWEntity
     ---@returns KNWEntity
-    local KNWEntity,getPriv = KClass(function(eid)
+    KNWEntity,getPriv = KClass(function(eid)
+        local exists = activeEnts[eid]
+        if exists then return getPriv(exists) end
+
         return {
             EntIndex = eid,
             NWTime = SysTime(),
@@ -67,7 +71,7 @@ elseif CLIENT then
 
     ---CLIENT<br>
     ---Reads a KNWEntity from a net message.
-    ---@returns KNWEntity KNWEntity
+    ---@returns KNWEntity
     function net.ReadKNWEntity()
         local eid = n_ReadUInt(13)
         local knwEnt = activeEnts[eid]
