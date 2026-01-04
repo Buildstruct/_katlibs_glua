@@ -24,7 +24,7 @@ KClass = setmetatable({},{
 		local class = {}
 		classes[class] = true
 
-		local function instantiate(_,...)
+		local function instantiate(...)
 			local newObj = setmetatable({},{__index = class})
 			currObj = newObj
 			privTab[newObj] = constructor(...) or {}
@@ -34,10 +34,10 @@ KClass = setmetatable({},{
 
 		setmetatable(class,{
 			__index = inherit,
-			__call = (privateConstructor == true) and nil or instantiate,
+			__call = (privateConstructor == true) and nil or function(_,...) return instantiate(...) end,
 		})
 
-		return class,getPriv,function(...) return instantiate(_,...) end
+		return class,getPriv,instantiate
 	end
 })
 
