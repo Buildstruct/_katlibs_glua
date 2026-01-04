@@ -34,7 +34,7 @@ KClass = setmetatable({},{
 
 		setmetatable(class,{
 			__index = inherit,
-			__call = (privateConstructor == true) and nil or constructor,
+			__call = (privateConstructor == true) and nil or instantiate,
 		})
 
 		return class,getPriv,function(...) return instantiate(_,...) end
