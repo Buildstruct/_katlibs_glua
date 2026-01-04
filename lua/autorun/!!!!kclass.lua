@@ -33,12 +33,10 @@ KClass = function(constructor,inherit,privateConstructor)
 
 	setmetatable(class,{
 		__index = inherit,
-		__call = (privateConstructor ~= nil) and instantiate or nil,
+		__call = (privateConstructor ~= nil) and constructor or nil,
 	})
 
-	function instantiate(...) return constructor(_,...) end
-
-	return class,getPriv,instantiate
+	return class,getPriv,function(...) return instantiate(_,...) end
 end
 
 ---Get the current public object being instantiated.<br>
