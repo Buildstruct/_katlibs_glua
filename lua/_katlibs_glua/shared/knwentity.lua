@@ -128,8 +128,11 @@ elseif CLIENT then
     ---Hooks:
     --- - OnInitialize(number entIndex, Entity ent)
     --- - OnRemove(number entIndex)
+    --- @param hooktype any
+    --- @param id any
+    --- @param func function?
     function KNWEntity:AddHook(hooktype,id,func)
-        KError.ValidateArg(3,"func",KVarCondition.Function(func))
+        if func then KError.ValidateArg(3,"func",KVarCondition.Function(func)) end
 
         local hookTab = getPriv(self).Hooks[hooktype]
         if not hookTab then return end
