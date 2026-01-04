@@ -50,6 +50,7 @@ elseif CLIENT then
 
     ---private constructor
     ---@class KNWEntity
+    ---@overload fun(eid : number): KNWEntity
     ---@returns KNWEntity
     local KNWEntity,getPriv = KClass(function(eid)
         return {
@@ -72,7 +73,9 @@ elseif CLIENT then
         local knwEnt = activeEnts[eid]
 
         if knwEnt then
-            getPriv(knwEnt).IsFirstTimeNetworked = false
+            ---@class KNWEntity
+            local priv = getPriv(knwEnt)
+            priv.IsFirstTimeNetworked = false
             return knwEnt
         end
 
