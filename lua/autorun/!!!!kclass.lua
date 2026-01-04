@@ -12,7 +12,7 @@ local currObj
 ---@return fun(privTab : table): table? getPriv A getter for the class's private table
 ---@return fun(privTab : table): table instantiate A factory for a new object
 KClass = setmetatable({},{
-	__call = function(constructor,inherit,privateConstructor)
+	__call = function(_,constructor,inherit,privateConstructor)
 		constructor = constructor or function(...) end
 		KError.ValidateArg(1,"constructor",KVarCondition.Function(constructor))
 
