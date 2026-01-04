@@ -13,7 +13,6 @@ local currObj
 ---@return fun(privTab : table): table instantiate A factory for a new object
 KClass = setmetatable({},{
 	__call = function(_,constructor,inherit,privateConstructor)
-		print(isfunction(constructor),"IS FUNCTION")
 		constructor = constructor or function(...) end
 		KError.ValidateArg(1,"constructor",KVarCondition.Function(constructor))
 
@@ -35,7 +34,7 @@ KClass = setmetatable({},{
 
 		setmetatable(class,{
 			__index = inherit,
-			__call = (privateConstructor ~= nil) and constructor or nil,
+			__call = (privateConstructor == true) and nil or constructor,
 		})
 
 		return class,getPriv,function(...) return instantiate(_,...) end
