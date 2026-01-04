@@ -13,6 +13,7 @@ local currObj
 ---@return fun(privTab : table): table instantiate A factory for a new object
 KClass = setmetatable({},{
 	__call = function(_,constructor,inherit,privateConstructor)
+		print(isfunction(constructor),"IS FUNCTION")
 		constructor = constructor or function(...) end
 		KError.ValidateArg(1,"constructor",KVarCondition.Function(constructor))
 
