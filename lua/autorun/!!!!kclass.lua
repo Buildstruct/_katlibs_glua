@@ -1,10 +1,11 @@
 local classes = setmetatable({},{__mode = "k"})
 
-local currObj
+local currObj,baseClassArgs
 
 ---@class KClass
 ---OOP implementation<br>
 ---Constructor returns initial table of private fields.
+---If inheriting, elements of constructor vararg are passed into baseclass
 ---@overload fun(constructor: (fun(...): table?), inherit: table?, privateConstructor : boolean?) : (table, (fun(obj : table): table?), fun(...): table)
 KClass = setmetatable({},{
 	__call = function(_,constructor,inherit,privateConstructor)
@@ -22,7 +23,19 @@ KClass = setmetatable({},{
 		local function instantiate(...)
 			local newObj = setmetatable({},{__index = class})
 			currObj = newObj
-			privTab[newObj] = constructor(...) or {}
+			baseClassArgs = nil
+
+			local constructorPriv = constructor(...) or {}
+
+			if inherit then
+				if not baseClassArgs then error("Failed to call baseclass constructor in inherited class!") end
+				local priv = inherit(unpack(baseClassArgs))
+				table.Merge(priv,constructorPriv,true)
+				privTab[newObj] = priv
+			else
+				privTab[newObj] = constructorPriv
+			end
+
 			currObj = nil
 			return newObj
 		end
@@ -40,4 +53,10 @@ KClass = setmetatable({},{
 ---<b><u>Can only be called inside constructors!<u/><b/>
 function KClass.GetSelf()
 	return currObj
+end
+
+---Calls the baseclass constructor for inheritance.<br>
+---<b><u>Can only be called inside constructors!<u/><b/>
+function KClass.CallBaseConstructor(...)
+	baseClassArgs = {...}
 end
