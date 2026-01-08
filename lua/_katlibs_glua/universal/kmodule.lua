@@ -118,11 +118,5 @@ end)
 
 function KModule:GetUID() return getPriv(self).UID end
 function KModule:GetName() return getPriv(self).Name end
-
-function KModule:Dispose()
-    getPriv(self).Dispose()
-end
-
-function KModule.GetActiveModules()
-    return table.ClearKeys(activeModules)
-end
+function KModule:Dispose() getPriv(self).Dispose() end
+function KModule.GetActiveModules() return table.ClearKeys(activeModules) end
