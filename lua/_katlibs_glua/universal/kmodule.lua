@@ -20,7 +20,6 @@ end
 
 local activeModules = {}
 local moduleHooks = {}
-local uidItr = 0
 
 local getPriv
 ---@class KModule
@@ -28,11 +27,10 @@ local getPriv
 ---@overload fun(moduleName: string, entryPoint: fun(...)): KRegenResourcePool
 ---@return KModule KModule
 KModule,getPriv = KClass(function(moduleName,entryPoint)
-    uidItr = uidItr + 1
+    if activeModules[moduleName] then activeModules[moduleName]:Dispose() end
 
     local this = KClass.GetSelf()
-    local uid = uidItr
-    activeModules[this] = this
+    activeModules[moduleName] = this
     local localHooks = {}
     local disposeCBs = {}
 
@@ -90,11 +88,11 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
     local env = setmetatable({
         hook = {
             Add = function(hookType,hookName,callback)
-                addHook(hookType,hookName .. uid,callback)
+                addHook(hookType,hookName,callback)
             end,
 
             Remove = function(hookType,hookName)
-                removeHook(hookType,hookName .. uid)
+                removeHook(hookType,hookName)
             end,
         },
 
@@ -110,13 +108,11 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
     xpcall(entryPoint,onHookError)
 
     return {
-        UID = uid,
         Name = moduleName,
         Dispose = dispose,
     }
 end)
 
-function KModule:GetUID() return getPriv(self).UID end
 function KModule:GetName() return getPriv(self).Name end
 function KModule:Dispose() getPriv(self).Dispose() end
-function KModule.GetActiveModules() return table.ClearKeys(activeModules) end
+function KModule.GetActiveModules() return table.Copy(activeModules) end
