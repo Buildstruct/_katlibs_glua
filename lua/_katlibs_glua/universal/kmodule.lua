@@ -116,6 +116,9 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
     }
 end)
 
+function KModule:GetUID() return getPriv(self).UID end
+function KModule:GetName() return getPriv(self).Name end
+
 function KModule:Dispose()
     getPriv(self).Dispose()
 end
