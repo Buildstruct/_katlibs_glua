@@ -64,10 +64,10 @@ do
 
     ---Set a callback for when a stream is fully received from the opposite realm<br>
     ---@param id string
-    ---@param callback fun(data : string, ply : Player?)
+    ---@param callback fun(data : string, ply : Player?)?
     function KNetStream.ReceiveData(id,callback)
         KError.ValidateArg(1,"id",KVarCondition.String(id))
-        KError.ValidateArg(2,"callback",KVarCondition.Function(callback))
+        if callback then KError.ValidateArg(2,"callback",KVarCondition.Function(callback)) end
 
         receivers[id] = callback
     end
