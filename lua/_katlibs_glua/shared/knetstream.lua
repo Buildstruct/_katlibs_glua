@@ -1,6 +1,7 @@
 if KNetStream then return end
 
 local MAX_BYTES_PER_SECOND = 10e3
+local MAX_CHUNKS = 10e3
 
 local NETSTRING = "KNetStream"
 if SERVER then util.AddNetworkString(NETSTRING) end
@@ -41,6 +42,7 @@ do
 
         local dataSize = #data
         local numChunks = math.ceil(dataSize / MAX_BYTES_PER_SECOND)
+        assert(numChunks < MAX_CHUNKS,string.format("size cannot be greater than %d bytes!",MAX_BYTES_PER_SECOND * MAX_CHUNKS))
 
         netThrottler:Execute(#id + 33,function()
             net.Start(NETSTRING)
@@ -102,6 +104,12 @@ do
             local chunk = net.ReadData((len - 1) / 8)
 
             table.insert(chunks,chunk)
+
+            if SERVER and #chunks > MAX_CHUNKS then
+                setStreamData(nil,ply)
+                error(string.format("%s is sending more chunks than the MAX_CHUNKS limit! possible exploiter??",ply:SteamID()))
+            end
+
             if #chunks >= data.NumChunks then
                 local cb = receivers[data.ID]
                 if cb then cb(table.concat(chunks),ply) end
