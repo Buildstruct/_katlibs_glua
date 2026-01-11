@@ -46,8 +46,7 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
     end
 
     local function reportError(trace)
-        local traceback = debug.traceback(trace,5)
-        hook.Run("KModuleError",moduleName,trace,traceback)
+        hook.Run("KModuleError",moduleName,debug.traceback(trace,5))
     end
 
     local function dispose()
