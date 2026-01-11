@@ -107,12 +107,10 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
             end,
         },
 
-        module = {
-            SetDisposeCB = function(key,callback)
-                if callback then KError.ValidateArg(1,"key",KVarCondition.Function(callback)) end
-                disposeCBs[key] = callback
-            end,
-        },
+        SetModuleDisposeCB = function(key,callback)
+            if callback then KError.ValidateArg(1,"key",KVarCondition.Function(callback)) end
+            disposeCBs[key] = callback
+        end,
     },{__index = _G})
 
     setfenv(entryPoint,env)
@@ -126,6 +124,7 @@ end)
 
 function KModule:GetName() return getPriv(self).Name end
 function KModule:Dispose() getPriv(self).Dispose() end
+
 function KModule.GetActiveModules()
     local result = {}
     for k,v in pairs(activeModules) do
