@@ -1,3 +1,5 @@
+if KModule then KModule.DisposeAll() end
+
 local function getOrAddChildTable(parentTab,childTabKey,callbackIfAdd)
     local childTable = parentTab[childTabKey]
     if childTable ~= nil then return childTable end
@@ -34,7 +36,7 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
     local localHooks = {}
     local disposeCBs = {}
 
-    local function removeHook(hookType,hookName)
+    local function removeLocalHook(hookType,hookName)
         local function removeGlobalHook()
             hook.Remove(hookType,"KModule")
         end
@@ -44,16 +46,14 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
     end
 
     local function reportError(trace)
-        local errMsg = string.format("[KModule] Error in module [%s]",moduleName)
-        MsgC(Color(255,0,0),errMsg)
-        MsgC(Color(255,100,100),string.format("\n%s\n",trace))
-        hook.Run("KModule_Error",moduleName,trace)
+        local traceback = debug.traceback(trace,5)
+        hook.Run("KModuleError",moduleName,trace,traceback)
     end
 
     local function dispose()
         for hookType,tab in pairs(localHooks) do
             for hookName,_ in pairs(tab) do
-                removeHook(hookType,hookName)
+                removeLocalHook(hookType,hookName)
             end
         end
 
@@ -70,14 +70,24 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
         reportError(trace)
     end
 
-    local function addHook(hookType,hookName,callback)
-        hookName = hookName
-
+    local function addLocalHook(hookType,hookName,callback)
         local function addGlobalHook(newTab)
             hook.Add(hookType,"KModule",function(...)
-                for _,func in pairs(newTab) do
-                    local worked,value = xpcall(func,onHookError,...)
-                    if worked and value ~= nil then return value end
+                for key,func in pairs(newTab) do
+                    local worked,value
+                    if isstring(key) then
+                        worked,value = xpcall(func,onHookError,...)
+                    elseif not IsValid(key) then
+                        removeLocalHook(hookType,hookName)
+                        continue
+                    else
+                        worked,value = xpcall(func,onHookError,key,...)
+                    end
+
+                    if worked and value ~= nil then
+                        print("returning value to global hook",moduleName,hookType,hookName,value)
+                        return value
+                    end
                 end
             end)
         end
@@ -89,11 +99,11 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
     local env = setmetatable({
         hook = {
             Add = function(hookType,hookName,callback)
-                addHook(hookType,hookName,callback)
+                addLocalHook(hookType,hookName,callback)
             end,
 
             Remove = function(hookType,hookName)
-                removeHook(hookType,hookName)
+                removeLocalHook(hookType,hookName)
             end,
 
             Run = function(hookType,...)
@@ -132,4 +142,10 @@ function KModule.GetActiveModules()
     end
 
     return result
+end
+
+function KModule.DisposeAll()
+    for _,v in pairs(activeModules) do
+        v:Dispose()
+    end
 end
