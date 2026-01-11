@@ -76,7 +76,8 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
         local function addGlobalHook(newTab)
             hook.Add(hookType,"KModule",function(...)
                 for _,func in pairs(newTab) do
-                    xpcall(func,onHookError,...)
+                    local worked,value = xpcall(func,onHookError,...)
+                    if worked and value ~= nil then return value end
                 end
             end)
         end
@@ -93,6 +94,16 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
 
             Remove = function(hookType,hookName)
                 removeHook(hookType,hookName)
+            end,
+
+            Run = function(hookType,...)
+                local hookTable = getOrAddChildTable(localHooks,hookType)
+                local returns = {}
+                for _,func in pairs(hookTable) do
+                    table.insert(returns,func(...))
+                    if #returns >= 6 then break end
+                end
+                return unpack(returns)
             end,
         },
 
@@ -115,4 +126,11 @@ end)
 
 function KModule:GetName() return getPriv(self).Name end
 function KModule:Dispose() getPriv(self).Dispose() end
-function KModule.GetActiveModules() return table.Copy(activeModules) end
+function KModule.GetActiveModules()
+    local result = {}
+    for k,v in pairs(activeModules) do
+        result[k] = v
+    end
+
+    return result
+end
