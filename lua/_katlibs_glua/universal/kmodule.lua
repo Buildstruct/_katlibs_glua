@@ -26,9 +26,9 @@ local moduleHooks = {}
 local getPriv
 ---@class KModule
 ---A pcall wrapper for code that allows for modular code that can be stopped at any time.
----@overload fun(moduleName: string, entryPoint: fun(...)): KRegenResourcePool
+---@overload fun(moduleName: string, entryPoint: fun(...), env : table?): KRegenResourcePool
 ---@return KModule KModule
-KModule,getPriv = KClass(function(moduleName,entryPoint)
+KModule,getPriv = KClass(function(moduleName,entryPoint,env)
     if activeModules[moduleName] then activeModules[moduleName]:Dispose() end
 
     local this = KClass.GetSelf()
@@ -95,34 +95,33 @@ KModule,getPriv = KClass(function(moduleName,entryPoint)
         getOrAddChildTable(localHooks,hookType)[hookName] = true
     end
 
-    local env = setmetatable({
-        hook = {
-            Add = function(hookType,hookName,callback)
-                addLocalHook(hookType,hookName,callback)
-            end,
-
-            Remove = function(hookType,hookName)
-                removeLocalHook(hookType,hookName)
-            end,
-
-            Run = function(hookType,...)
-                local hookTable = getOrAddChildTable(localHooks,hookType)
-                local returns = {}
-                for _,func in pairs(hookTable) do
-                    table.insert(returns,func(...))
-                    if #returns >= 6 then break end
-                end
-                return unpack(returns)
-            end,
-        },
-
-        SetModuleDisposeCB = function(key,callback)
-            if callback then KError.ValidateArg(1,"key",KVarCondition.Function(callback)) end
-            disposeCBs[key] = callback
+    local moduleEnv = setmetatable(env or {},{__index = _G})
+    moduleEnv.hook = {
+        Add = function(hookType,hookName,callback)
+            addLocalHook(hookType,hookName,callback)
         end,
-    },{__index = _G})
 
-    setfenv(entryPoint,env)
+        Remove = function(hookType,hookName)
+            removeLocalHook(hookType,hookName)
+        end,
+
+        Run = function(hookType,...)
+            local hookTable = getOrAddChildTable(localHooks,hookType)
+            local returns = {}
+            for _,func in pairs(hookTable) do
+                table.insert(returns,func(...))
+                if #returns >= 6 then break end
+            end
+            return unpack(returns)
+        end,
+    }
+
+    moduleEnv.SetModuleDisposeCB = function(key,callback)
+        if callback then KError.ValidateArg(1,"key",KVarCondition.Function(callback)) end
+        disposeCBs[key] = callback
+    end
+
+    setfenv(entryPoint,moduleEnv)
     xpcall(entryPoint,onHookError)
 
     return {
