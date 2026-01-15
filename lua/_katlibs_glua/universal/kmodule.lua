@@ -83,10 +83,7 @@ KModule,getPriv = KClass(function(moduleName,entryPoint,env)
                         worked,value = xpcall(func,onHookError,key,...)
                     end
 
-                    if worked and value ~= nil then
-                        print("returning value to global hook",moduleName,hookType,hookName,value)
-                        return value
-                    end
+                    if worked and value ~= nil then return value end
                 end
             end)
         end
