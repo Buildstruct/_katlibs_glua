@@ -14,7 +14,10 @@ local NET_ENUMS_SETUP = {
     INITIALIZED = 2,
 }
 
-local netStartSetup,netReceiveSetup = KEnumNetMsg(NETSTRING_KMODULE_SETUP,NET_ENUMS_SETUP)
+local netStartSetup,netReceiveSetup
+hook.Add("KatLibsLoaded","KModule",function()
+    netStartSetup,netReceiveSetup = KEnumNetMsg(NETSTRING_KMODULE_SETUP,NET_ENUMS_SETUP)
+end)
 
 local function getOrAddChildTable(parentTab,childTabKey,callbackIfAdd)
     local childTable = parentTab[childTabKey]

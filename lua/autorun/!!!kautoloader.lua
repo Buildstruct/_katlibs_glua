@@ -72,3 +72,4 @@ KAutoLoader.IncludeDir("_katlibs_glua/universal",{Realm = "sh",Recursive = false
 KAutoLoader.IncludeDir("_katlibs_glua/shared",{Realm = "sh",Recursive = false})
 KAutoLoader.IncludeDir("_katlibs_glua/server",{Realm = "sv",Recursive = false})
 KAutoLoader.IncludeDir("_katlibs_glua/client",{Realm = "cl",Recursive = false})
+hook.Run("KatLibsLoaded")
