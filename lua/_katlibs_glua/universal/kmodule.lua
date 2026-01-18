@@ -53,7 +53,12 @@ local function addGlobalHook(hookFunctionsTable,hookType,onHookError)
                 worked,value = xpcall(func,onHookError,key,...)
             end
 
-            if worked and value ~= nil then return value end
+            if not worked then
+                hookFunctionsTable[key] = nil
+                continue
+            end
+
+            if value ~= nil then return value end
         end
     end)
 end
@@ -121,6 +126,11 @@ KModule,getPriv = KClass(function(moduleName,entryPoint,env)
     end
 
     do --hooks
+        function onHookError(trace)
+            dispose()
+            reportError(trace)
+        end
+
         function addLocalHook(hookType,hookName,callback)
             local function callbackIfNewHook(hookFunctionsTable)
                 addGlobalHook(hookFunctionsTable,hookType,onHookError)
@@ -147,11 +157,6 @@ KModule,getPriv = KClass(function(moduleName,entryPoint,env)
                 if #returns >= 6 then break end
             end
             return unpack(returns)
-        end
-
-        function onHookError(trace)
-            dispose()
-            reportError(trace)
         end
     end
 
