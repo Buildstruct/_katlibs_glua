@@ -15,9 +15,6 @@ local NET_ENUMS_SETUP = {
 }
 
 local netStartSetup,netReceiveSetup
-hook.Add("KatLibsLoaded","KModule",function()
-    netStartSetup,netReceiveSetup = KEnumNetMsg(NETSTRING_KMODULE_SETUP,NET_ENUMS_SETUP)
-end)
 
 local function getOrAddChildTable(parentTab,childTabKey,callbackIfAdd)
     local childTable = parentTab[childTabKey]
@@ -280,49 +277,53 @@ function KModule.DisposeAll()
     end
 end
 
-if SERVER then
-    netReceiveSetup(NET_ENUMS_SETUP.AWAITING_NETSTRING_UIDS,function(ply)
-        local moduleName = net.ReadString()
-        local module = activeModules[moduleName]
-        if not IsValid(module) then return end
+hook.Add("KatLibsLoaded","KModule",function()
+    netStartSetup,netReceiveSetup = KEnumNetMsg(NETSTRING_KMODULE_SETUP,NET_ENUMS_SETUP)
 
-        getPriv(module).SendAllNetStringsToClient(ply)
-    end)
+    if SERVER then
+        netReceiveSetup(NET_ENUMS_SETUP.AWAITING_NETSTRING_UIDS,function(ply)
+            local moduleName = net.ReadString()
+            local module = activeModules[moduleName]
+            if not IsValid(module) then return end
 
-    netReceiveSetup(NET_ENUMS_SETUP.INITIALIZED,function(ply)
-        local moduleName = net.ReadString()
-        local module = activeModules[moduleName]
-        if not IsValid(module) then return end
+            getPriv(module).SendAllNetStringsToClient(ply)
+        end)
 
-        getPriv(module).RunLocalHook("KModulePlayerInitialized",ply)
-    end)
-elseif CLIENT then
-    netReceiveSetup(NET_ENUMS_SETUP.INITIALIZE_WITH_NETSTRING_UIDS,function(ply)
-        local moduleName = net.ReadString()
-        local module = activeModules[moduleName]
-        if not IsValid(module) then return end
+        netReceiveSetup(NET_ENUMS_SETUP.INITIALIZED,function(ply)
+            local moduleName = net.ReadString()
+            local module = activeModules[moduleName]
+            if not IsValid(module) then return end
 
-        local priv = getPriv(module)
-        local count = net.ReadUInt(32)
+            getPriv(module).RunLocalHook("KModulePlayerInitialized",ply)
+        end)
+    elseif CLIENT then
+        netReceiveSetup(NET_ENUMS_SETUP.INITIALIZE_WITH_NETSTRING_UIDS,function(ply)
+            local moduleName = net.ReadString()
+            local module = activeModules[moduleName]
+            if not IsValid(module) then return end
 
-        for _ = 1,count do
+            local priv = getPriv(module)
+            local count = net.ReadUInt(32)
+
+            for _ = 1,count do
+                local netstring = net.ReadString()
+                local netUID = net.ReadUInt(32)
+                priv.UpdateWithNewNetstring(netstring,netUID)
+            end
+            priv.Run()
+        end)
+
+        netReceiveSetup(NET_ENUMS_SETUP.NEW_NETSTRING_UID,function(ply)
+            local moduleName = net.ReadString()
+            local module = activeModules[moduleName]
+            if not IsValid(module) then return end
+
             local netstring = net.ReadString()
             local netUID = net.ReadUInt(32)
-            priv.UpdateWithNewNetstring(netstring,netUID)
-        end
-        priv.Run()
-    end)
-
-    netReceiveSetup(NET_ENUMS_SETUP.NEW_NETSTRING_UID,function(ply)
-        local moduleName = net.ReadString()
-        local module = activeModules[moduleName]
-        if not IsValid(module) then return end
-
-        local netstring = net.ReadString()
-        local netUID = net.ReadUInt(32)
-        getPriv(module).UpdateWithNewNetstring(netstring,netUID)
-    end)
-end
+            getPriv(module).UpdateWithNewNetstring(netstring,netUID)
+        end)
+    end
+end)
 
 net.Receive(NETSTRING_KMODULE,function(len,ply)
     local netUID = net.ReadUInt(32)

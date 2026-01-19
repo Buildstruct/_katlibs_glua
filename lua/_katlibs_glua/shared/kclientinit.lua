@@ -27,7 +27,7 @@ if SERVER then
 		alreadyLoaded[ply] = nil
 	end)
 
-	net.Receive("KClientInit", function(_,ply)
+	net.Receive("KClientInit",function(_,ply)
 		if alreadyLoaded[ply] then return end
 		alreadyLoaded[ply] = true
 
