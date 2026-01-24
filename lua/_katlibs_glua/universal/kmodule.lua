@@ -78,6 +78,10 @@ local getPriv
 ---@overload fun(moduleName: string, entryPoint: fun(...), env : table?): KRegenResourcePool
 ---@return KModule KModule
 KModule,getPriv = KClass(function(moduleName,entryPoint,env)
+    KError.ValidateArg(1,"moduleName",KVarCondition.String(moduleName))
+    KError.ValidateArg(2,"entryPoint",KVarCondition.Function(entryPoint))
+    if env then KError.ValidateArg(3,"env",KVarCondition.Table(env)) end
+
     if activeModules[moduleName] then activeModules[moduleName]:Dispose() end
 
     local valid = true
@@ -213,7 +217,6 @@ KModule,getPriv = KClass(function(moduleName,entryPoint,env)
 
     local moduleEnv = setmetatable(env or {},{__index = _G})
     do --env setup
-
         if SERVER then
             obscureGlobalFunctionsInEnv(moduleEnv,"util",{
                 AddNetworkString = addNetworkString,
