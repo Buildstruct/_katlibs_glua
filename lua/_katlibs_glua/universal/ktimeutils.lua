@@ -16,7 +16,7 @@ local KVarCondition_Function = KVarCondition.Function
 ---@param duration number
 ---@param func fun(up: number)
 function KTimeUtils.TweenAsync(duration,func)
-    assert(co_running(),"ThreadedTween called outside of coroutine!")
+    assert(co_running(),"TweenAsync called outside of coroutine!")
     KError_ValidateArg(1,"duration",KVarCondition_NumberGreater(duration,0))
     KError_ValidateArg(2,"func",KVarCondition_Function(func))
 
