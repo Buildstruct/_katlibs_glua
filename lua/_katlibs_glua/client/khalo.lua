@@ -72,6 +72,7 @@ local halos = {}
 ---
 ---params:
 --- - sequential Entity[] Ents
+--- - Color Color
 --- - bool? Hidden = false
 --- - bool? Additive = false
 --- - bool? IgnoreZ = false
@@ -194,7 +195,6 @@ local function renderHalos(haloTab)
 		r_SetBlend(0)
 
 		for e,_ in pairs(ents) do
-			print(e)
 			if not IsValid(e) then continue end
 			e_DrawModel(e)
 		end
