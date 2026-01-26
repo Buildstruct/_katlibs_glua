@@ -195,7 +195,11 @@ local function renderHalos(haloTab)
 		r_SetBlend(0)
 
 		for e,_ in pairs(ents) do
-			if not IsValid(e) then continue end
+			if not IsValid(e) then
+				ents[e] = nil
+				continue
+			end
+
 			e_DrawModel(e)
 		end
 		c_End3D()
@@ -221,7 +225,6 @@ local function renderHalos(haloTab)
 		local b = c.b / 255
 		local a = c.a / 255
 		for e,_ in pairs(ents) do
-			if not IsValid(e) then continue end
 			r_SetColorModulation(r,g,b)
 			r_SetBlend(a)
 			e_DrawModel(e)
