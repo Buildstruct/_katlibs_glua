@@ -58,26 +58,30 @@ do --mesh clipping
 				  base1/______\ base2
 		]]
 		local vectorPoint,normalPoint,uPoint,vPoint = meshVertexPoint.pos,meshVertexPoint.normal,meshVertexPoint.u,meshVertexPoint.v
-		local vectorBase1,normalBase1,uBase1,vBase1 = meshVertexBase1.pos,meshVertexBase1.normal,meshVertexBase1.u,meshVertexBase1.v
-		local vectorBase2,normalBase2,uBase2,vBase2 = meshVertexBase2.pos,meshVertexBase2.normal,meshVertexBase2.u,meshVertexBase2.v
+		local vectorBase1,uBase1,vBase1 = meshVertexBase1.pos,meshVertexBase1.u,meshVertexBase1.v
+		local vectorBase2,uBase2,vBase2 = meshVertexBase2.pos,meshVertexBase2.u,meshVertexBase2.v
 		local vectorIntersection1 = util_IntersectRayWithPlane(vectorPoint,vectorBase1 - vectorPoint,planeOrigin,planeNormal)
 		local vectorIntersection2 = util_IntersectRayWithPlane(vectorPoint,vectorBase2 - vectorPoint,planeOrigin,planeNormal)
 		local uIntersection1,vIntersection1 = (uPoint + uBase1) / 2, (vPoint + vBase1) / 2
 		local uIntersection2,vIntersection2 = (uPoint + uBase2) / 2, (vPoint + vBase2) / 2
 
+		local meshVertexIntersection1 = { pos = vectorIntersection1, normal = normalPoint, u = uIntersection1, v = vIntersection1 }
+		local meshVertexIntersection2 = { pos = vectorIntersection2, normal = normalPoint, u = uIntersection2, v = vIntersection2 }
+
 		--add point triangle
-		t_insert(splitPoint,{ pos = vectorPoint, normal = normalPoint, u = uPoint, v = vPoint })
-		t_insert(splitPoint,{ pos = vectorIntersection1, normal = normalPoint, u = uIntersection1, v = vIntersection1 })
-		t_insert(splitPoint,{ pos = vectorIntersection2, normal = normalPoint, u = uIntersection2, v = vIntersection2 })
+		t_insert(splitPoint,meshVertexPoint)
+		t_insert(splitPoint,meshVertexIntersection1)
+		t_insert(splitPoint,meshVertexIntersection2)
 
 		--split base into two triangles
-		t_insert(splitBase,{ pos = vectorBase1, normal = normalBase1, u = uBase1, v = vBase1 })
-		t_insert(splitBase,{ pos = vectorIntersection1, normal = normalBase1, u = uIntersection1, v = vIntersection1 })
-		t_insert(splitBase,{ pos = vectorBase2, normal = normalBase2, u = uBase2, v = vBase2 })
+		t_insert(splitBase,meshVertexIntersection1)
+		t_insert(splitBase,meshVertexBase1)
+		t_insert(splitBase,meshVertexBase2)
 
-		t_insert(splitBase,{ pos = vectorBase2, normal = normalBase2, u = uBase2, v = vBase2 })
-		t_insert(splitBase,{ pos = vectorIntersection1, normal = normalBase1, u = uIntersection1, v = vIntersection1 })
-		t_insert(splitBase,{ pos = vectorIntersection2, normal = normalBase2, u = uIntersection2, v = vIntersection2 })
+		t_insert(splitBase,meshVertexBase2)
+		t_insert(splitBase,meshVertexIntersection2)
+		t_insert(splitBase,meshVertexIntersection1)
+
 	end
 
 	local function sortTriangleToSide(splitA,splitB,meshVertex1,meshVertex2,meshVertex3,planeOrigin,planeNormal)
@@ -85,7 +89,7 @@ do --mesh clipping
 		local IsV2OnSideA = isOnSideA(meshVertex2,planeOrigin,planeNormal)
 		local IsV3OnSideA = isOnSideA(meshVertex3,planeOrigin,planeNormal)
 
-		if IsV1OnSideA and IsV2OnSideA and IsV3OnSideA then
+		if IsV1OnSideA and IsV2OnSideA and IsV3OnSideA then --111
 			t_insert(splitA,meshVertex1)
 			t_insert(splitA,meshVertex2)
 			t_insert(splitA,meshVertex3)
@@ -99,16 +103,27 @@ do --mesh clipping
 			return
 		end
 
-		local meshVertsOnSideA = {}
-		local meshVertsOnSideB = {}
-		t_insert(IsV1OnSideA and meshVertsOnSideA or meshVertsOnSideB,meshVertex1)
-		t_insert(IsV2OnSideA and meshVertsOnSideA or meshVertsOnSideB,meshVertex2)
-		t_insert(IsV3OnSideA and meshVertsOnSideA or meshVertsOnSideB,meshVertex3)
+		--find which one is the "point"
+		--it is imperative that the vertices retain the same order
+		if IsV1OnSideA ~= IsV2OnSideA and IsV1OnSideA ~= IsV3OnSideA then
+			local splitPoint = IsV1OnSideA and splitA or splitB
+			local splitBase = IsV1OnSideA and splitB or splitA
+			splitTriangle(splitPoint,splitBase,meshVertex1,meshVertex2,meshVertex3,planeOrigin,planeNormal)
+			return
+		end
 
-		if #meshVertsOnSideA == 1 then
-			splitTriangle(splitA,splitB,meshVertsOnSideA[1],meshVertsOnSideB[1],meshVertsOnSideB[2],planeOrigin,planeNormal)
-		else
-			splitTriangle(splitB,splitA,meshVertsOnSideB[1],meshVertsOnSideA[1],meshVertsOnSideA[2],planeOrigin,planeNormal)
+		if IsV2OnSideA ~= IsV1OnSideA and IsV2OnSideA ~= IsV3OnSideA then
+			local splitPoint = IsV2OnSideA and splitA or splitB
+			local splitBase = IsV2OnSideA and splitB or splitA
+			splitTriangle(splitPoint,splitBase,meshVertex2,meshVertex3,meshVertex1,planeOrigin,planeNormal)
+			return
+		end
+
+		if IsV3OnSideA ~= IsV1OnSideA and IsV3OnSideA ~= IsV2OnSideA then
+			local splitPoint = IsV3OnSideA and splitA or splitB
+			local splitBase = IsV3OnSideA and splitB or splitA
+			splitTriangle(splitPoint,splitBase,meshVertex3,meshVertex1,meshVertex2,planeOrigin,planeNormal)
+			return
 		end
 	end
 
@@ -415,3 +430,5 @@ function KScene.FromSerializable(serializable)
 
 	return jsonConstructor(sanitized)
 end
+
+hook.Run("KatLibsLoaded")
