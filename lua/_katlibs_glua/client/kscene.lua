@@ -272,14 +272,11 @@ do --convert KModelData into MeshVertexes
 	end
 end
 
-local buildRenderFunction
-do --rendering meshes using an entity as a base
-	function buildRenderFunction(newMesh,material,colorRed,colorGreen,colorBlue,colorAlpha)
-		return function()
-			r_SetColorModulation(colorRed,colorGreen,colorBlue)
-			r_SetBlend(colorAlpha)
-			kmr_DrawMesh(newMesh,material)
-		end
+local function buildRenderFunction(newMesh,material,colorRed,colorGreen,colorBlue,colorAlpha)
+	return function()
+		r_SetColorModulation(colorRed,colorGreen,colorBlue)
+		r_SetBlend(colorAlpha)
+		kmr_DrawMesh(newMesh,material)
 	end
 end
 
