@@ -79,6 +79,5 @@ end
 ---Calls the baseclass constructor for inheritance.<br>
 ---<b><u>Can only be called inside constructors!<u/><b/>
 function KClass.CallBaseConstructor(...)
-	print("setbaseclassargs",...)
 	baseClassArgs = {...}
 end
