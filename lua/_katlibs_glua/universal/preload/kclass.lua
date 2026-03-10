@@ -44,7 +44,7 @@ KClass = setmetatable({},{
 		if publicConstructor then KError.ValidateArg(1,"constructor",KVarCondition.Function(publicConstructor)) end
 		if inheritedClass then KError.ValidateArg(2,"inheritedClass",KVarCondition.Table(inheritedClass)) end
 
-		local private_directory = {}
+		local private_directory = setmetatable({},{__mode = "k"})
 		local function getPriv(obj) return private_directory[obj] end
 
 		local class_meta = {}
