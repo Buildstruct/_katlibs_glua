@@ -297,7 +297,7 @@ hook.Add("KatLibsLoaded","KModule",function()
             local module = activeModules[moduleName]
             if not IsValid(module) then return end
 
-            getPriv(module).RunLocalHook("KModulePlayerInitialized",ply)
+            getPriv(module).RunLocalHook("KOnClientInit",ply)
         end)
     elseif CLIENT then
         netReceiveSetup(NET_ENUMS_SETUP.INITIALIZE_WITH_NETSTRING_UIDS,function(ply)
