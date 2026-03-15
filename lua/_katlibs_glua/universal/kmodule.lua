@@ -174,8 +174,14 @@ KModule,getPriv = KClass(function(moduleName,entryPoint,env)
                     net.WriteString(netstring)
                     net.WriteUInt(netUID,32)
                 end
-                net.Send(ply)
+
+                if ply == nil then
+                    net.Broadcast()
+                else
+                    net.Send(ply)
+                end
             end
+            sendAllNetStringsToClient()
 
             function addNetworkString(netstring)
                 if localNetUIDLookup[netstring] then return end
@@ -300,7 +306,7 @@ hook.Add("KatLibsLoaded","KModule",function()
             getPriv(module).RunLocalHook("KOnClientInit",ply)
         end)
     elseif CLIENT then
-        netReceiveSetup(NET_ENUMS_SETUP.INITIALIZE_WITH_NETSTRING_UIDS,function(ply)
+        netReceiveSetup(NET_ENUMS_SETUP.INITIALIZE_WITH_NETSTRING_UIDS,function()
             local moduleName = net.ReadString()
             local module = activeModules[moduleName]
             if not IsValid(module) then return end
@@ -316,7 +322,7 @@ hook.Add("KatLibsLoaded","KModule",function()
             priv.Run()
         end)
 
-        netReceiveSetup(NET_ENUMS_SETUP.NEW_NETSTRING_UID,function(ply)
+        netReceiveSetup(NET_ENUMS_SETUP.NEW_NETSTRING_UID,function()
             local moduleName = net.ReadString()
             local module = activeModules[moduleName]
             if not IsValid(module) then return end
