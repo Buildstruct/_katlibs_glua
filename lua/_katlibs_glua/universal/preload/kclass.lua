@@ -1,4 +1,3 @@
-local pairs = pairs
 local unpack = unpack
 local setmetatable = setmetatable
 local rawset = rawset
@@ -8,7 +7,7 @@ local function KVarCondition_KClass(class)
 	return {classInternalsLookup[class] ~= nil,"KClass"}
 end
 
-local baseClassArgs
+local baseClassArgs,currObj
 ---SHARED<br>
 ---OOP implementation<br>
 ---@class KClass
@@ -52,7 +51,9 @@ KClass = setmetatable({},{
 		local function getObjectFactory(constructor)
 			return function(...)
 				local object = setmetatable({},{__index = class})
+				currObj = object
 				populateObjectPriv(object,constructor,...)
+				currObj = nil
 				return object
 			end
 		end
@@ -83,4 +84,11 @@ KClass = setmetatable({},{
 ---<b><u>Can only be called inside constructors!<u/><b/>
 function KClass.CallBaseConstructor(...)
 	baseClassArgs = {...}
+end
+
+---SHARED<br>
+---Get the current public object being instantiated.<br>
+---<b><u>Can only be called inside constructors!<u/><b/>
+function KClass.GetSelf()
+	return currObj
 end
