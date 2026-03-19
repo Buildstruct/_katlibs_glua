@@ -15,7 +15,7 @@ local baseClassArgs,currObj
 KClass = setmetatable({},{
 	__call = function(_,publicConstructor,inheritedClass)
 		if publicConstructor then KError.ValidateArg(1,"constructor",KVarCondition.Function(publicConstructor)) end
-
+		if inheritedClass then KError.ValidateArg(2,"inheritedClass",KVarCondition_KClass(inheritedClass)) end
 		local classMetatable = {}
 		local class = setmetatable({},classMetatable)
 
@@ -26,7 +26,6 @@ KClass = setmetatable({},{
 
 		local populateObjectPriv
 		if inheritedClass then
-			KError.ValidateArg(2,"inheritedClass",KVarCondition_KClass(inheritedClass))
 			local inheritedInternals = classInternalsLookup[inheritedClass]
 			classMetatable.__index = inheritedClass
 
@@ -40,10 +39,21 @@ KClass = setmetatable({},{
 				if not baseClassArgs then error("Failed to call KClass.CallBaseConstructor in inherited class!") end
 				basePopulateObjectPriv(object,inheritedPublicConstructor,unpack(baseClassArgs))
 			end
+
+			classInternals.ParentClasses = setmetatable({
+				[class] = true,
+			},{
+				__mode = "k",
+				__index = inheritedInternals.ParentClasses
+			})
 		else
 			function populateObjectPriv(object,constructor,...)
 				classPrivDirectory[object] = constructor(...)
 			end
+
+			classInternals.ParentClasses = setmetatable({
+				[class] = true,
+			},{__mode = "k"})
 		end
 
 		classInternals.PopulateObjectPriv = populateObjectPriv
@@ -91,4 +101,17 @@ end
 ---<b><u>Can only be called inside constructors!<u/><b/>
 function KClass.GetSelf()
 	return currObj
+end
+
+---SHARED<br>
+---Check if object is or is a derivative of a class.
+function KClass.Is(object,comparisonClass)
+	if not istable(object) then return false end
+
+	local objectClass = getmetatable(object).__index
+	if not objectClass then return false end
+
+	local classInternals = classInternalsLookup[objectClass]
+	if not classInternals.ParentClasses[comparisonClass] then return false end
+	return true
 end
