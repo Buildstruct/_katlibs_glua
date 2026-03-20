@@ -4,6 +4,8 @@ local s_EndsWith = string.EndsWith
 local s_Replace = string.Replace
 local t_insert = table.insert
 local t_concat = table.concat
+local t_GetKeys = table.GetKeys
+local t_ClearKeys = table.ClearKeys
 
 
 local GENERATED_CODE_TEMPLATE = [[
@@ -11,6 +13,7 @@ local istable = istable
 local type = type
 local err
 local function getError() return err end
+%s
 
 %s
 
@@ -19,7 +22,7 @@ return eval_main,getError
 
 local EVALUATION_FUNCTION_TEMPLATE = [[
 
-local function %s(check,sanitized)
+function %s(check,sanitized)
 	local key,val,san,sanArr,typ
 %s
 	return true
@@ -79,6 +82,7 @@ local EVALUATE_SUBTABLE_CALLNAME = "eval_stab_%s%s"
 local EVALUATE_CUSTOMTYPE_CALLNAME = "eval_type_%s"
 
 local TO_POINTER = "%p"
+local LOCAL = "local %s"
 
 local generateTableEvaluationCode
 function generateTableEvaluationCode(recursionData)
@@ -127,12 +131,11 @@ function generateTableEvaluationCode(recursionData)
 				evalFunc = s_format(EVALUATE_MODIFIER_NULLABLE,s_Replace(evalFunc,"\n","\n\t"))
 			end
 
-
 			t_insert(currentEvaluation,s_format(EVALUATE_BASE,k,s_format(evalFunc,k,type)))
 		end
 	end
 
-	t_insert(evaluationFunctions,s_format(EVALUATION_FUNCTION_TEMPLATE,recursionData.CallName,t_concat(currentEvaluation)))
+	evaluationFunctions[recursionData.CallName] = s_format(EVALUATION_FUNCTION_TEMPLATE,recursionData.CallName,t_concat(currentEvaluation))
 end
 
 ---SHARED,STATIC<br>
@@ -142,13 +145,16 @@ end
 ---@class KTableSanitizer : function
 function KTableSanitizer(tableStructure,customTypeStructures)
 	local evaluationFunctions = {}
+	local callNames = {EVALUATE_MAIN_CALLNAME}
 
 	for typeName,typeStructure in pairs(customTypeStructures) do
+		local callName = s_format(EVALUATE_CUSTOMTYPE_CALLNAME,typeName)
 		generateTableEvaluationCode({
 			CurrentTable = typeStructure,
-			CallName = s_format(EVALUATE_CUSTOMTYPE_CALLNAME,typeName),
+			CallName = callName,
 			EvaluationFunctions = evaluationFunctions,
 		})
+		t_insert(callNames,callName)
 	end
 
 	generateTableEvaluationCode({
@@ -158,7 +164,11 @@ function KTableSanitizer(tableStructure,customTypeStructures)
 		CustomTypes = customTypeStructures,
 	})
 
-	local fullCode = s_format(GENERATED_CODE_TEMPLATE,t_concat(evaluationFunctions))
+	local fileHeader = s_format(LOCAL,t_concat(t_GetKeys(evaluationFunctions),","))
+	local evaluationFunctionCode = t_concat(t_ClearKeys(evaluationFunctions))
+	local fullCode = s_format(GENERATED_CODE_TEMPLATE,fileHeader,evaluationFunctionCode)
+
+	file.Write("testsanitizer.txt",fullCode)
 	local performCheck,getError = CompileString(fullCode,"KTableSanitizer")()
 
 	return function(check)
