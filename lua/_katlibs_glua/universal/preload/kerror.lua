@@ -15,6 +15,11 @@ local getmetatable = getmetatable
 local s_format = string.format
 local error = error
 
+local kc_Is
+hook.Add("KatLibsLoaded","KError",function()
+	kc_Is = KClass.Is
+end)
+
 ---SHARED,STATIC<br>
 ---Conditions for parameter checking.
 KVarCondition = {
@@ -92,6 +97,10 @@ KVarCondition = {
 
 	Angle = function(val)
 		return {isangle(val), "Angle"}
+	end,
+
+	KClass = function(val,compare,typeName)
+		return {kc_Is(val,compare),typeName}
 	end,
 }
 
