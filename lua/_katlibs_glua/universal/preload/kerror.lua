@@ -22,12 +22,8 @@ hook.Add("KatLibsLoaded","KError",function()
 	kc_Is = KClass.Is
 end)
 
----@alias KAssertion {[1]: any, [2]: boolean, [3]: string}
----@alias KVarCondition fun(val: any, ...) : KAssertion
-
 ---SHARED,STATIC<br>
 ---Conditions for parameter checking.
----@type { [string]: KVarCondition }
 KVarConditions = {
 	NotNull = function(val)
 		return {val, val ~= nil, "object"}
@@ -116,6 +112,18 @@ KVarConditions = {
 ---@param assertion [any, boolean, string]
 ---@return any value The value passed, if valid.
 function KError.ValidateArg(name,assertion)
+	if assertion[ASSERTION_RESULT] then return assertion[ASSERTION_VALUE] end
+
+	error(s_format("arg [%s]: expected [%s].",name,assertion[ASSERTION_EXPECTATION]))
+end
+
+---SHARED,STATIC<br>
+---Validate nullable function argument.
+---@param name string
+---@param assertion [any, boolean, string]
+---@return any value The value passed, if valid.
+function KError.ValidateNullableArg(name,assertion)
+	if assertion[ASSERTION_VALUE] == nil then return end
 	if assertion[ASSERTION_RESULT] then return assertion[ASSERTION_VALUE] end
 
 	error(s_format("arg [%s]: expected [%s].",name,assertion[ASSERTION_EXPECTATION]))
