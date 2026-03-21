@@ -3,10 +3,6 @@ local setmetatable = setmetatable
 local rawset = rawset
 local classInternalsLookup = setmetatable({},{__mode = "k"})
 
-local function KVarCondition_KClass(class)
-	return {classInternalsLookup[class] ~= nil,"KClass"}
-end
-
 local baseClassArgs,currObj
 ---SHARED<br>
 ---OOP implementation<br>
@@ -14,8 +10,8 @@ local baseClassArgs,currObj
 ---@overload fun(publicConstructor?: (fun(...): table), inheritedClass?: KClass) : (table, fun(any: any): table?)
 KClass = setmetatable({},{
 	__call = function(_,publicConstructor,inheritedClass)
-		if publicConstructor then KError.ValidateArg("constructor",KVarCondition.Function(publicConstructor)) end
-		if inheritedClass then KError.ValidateArg("inheritedClass",KVarCondition_KClass(inheritedClass)) end
+		if publicConstructor then KError.ValidateArg("constructor",KVarConditions.Function(publicConstructor)) end
+		if inheritedClass then KError.ValidateArg("inheritedClass",KVarConditions.KClass(inheritedClass)) end
 		local classMetatable = {}
 		local class = setmetatable({},classMetatable)
 
@@ -104,7 +100,9 @@ function KClass.GetSelf()
 end
 
 ---SHARED<br>
----Check if object is or is a derivative of a class.
+---Check if object is a KClass.
+---@param object any
+---@param comparisonClass? any If supplied, checks if the object is or is derived from this class.
 function KClass.Is(object,comparisonClass)
 	if not istable(object) then return false end
 
@@ -112,6 +110,9 @@ function KClass.Is(object,comparisonClass)
 	if not objectClass then return false end
 
 	local classInternals = classInternalsLookup[objectClass]
+	if not classInternals then return false end
+
+	if not comparisonClass then return true end
 	if not classInternals.ParentClasses[comparisonClass] then return false end
 	return true
 end

@@ -1,6 +1,8 @@
 if KError then return end
 
-AddCSLuaFile()
+local ASSERTION_VALUE = 1
+local ASSERTION_RESULT = 2
+local ASSERTION_EXPECTATION = 3
 
 ---SHARED,STATIC<br>
 ---Standardized errors
@@ -20,105 +22,116 @@ hook.Add("KatLibsLoaded","KError",function()
 	kc_Is = KClass.Is
 end)
 
+---@alias KAssertion {[1]: any, [2]: boolean, [3]: string}
+---@alias KVarCondition fun(val: any, ...) : KAssertion
+
 ---SHARED,STATIC<br>
 ---Conditions for parameter checking.
-KVarCondition = {
+---@type { [string]: KVarCondition }
+KVarConditions = {
 	NotNull = function(val)
-		return {val ~= nil, "object"}
+		return {val, val ~= nil, "object"}
 	end,
 
 	Number = function(val)
-		return {isnumber(val), "number"}
+		return {val, isnumber(val), "number"}
 	end,
 
 	NumberGreater = function(val,compare)
-		return {isnumber(val) and val > compare, s_format("number > %d",compare)}
+		return {val, isnumber(val) and val > compare, s_format("number > %d",compare)}
 	end,
 
 	NumberLess = function(val,compare)
-		return {isnumber(val) and val < compare, s_format("number < %d",compare)}
+		return {val, isnumber(val) and val < compare, s_format("number < %d",compare)}
 	end,
 
 	NumberGreaterOrEqual = function(val,compare)
-		return {isnumber(val) and val >= compare, s_format("number >= %d",compare)}
+		return {val, isnumber(val) and val >= compare, s_format("number >= %d",compare)}
 	end,
 
 	NumberLessOrEqual = function(val,compare)
-		return {isnumber(val) and val <= compare, s_format("number <= %d",compare)}
+		return {val, isnumber(val) and val <= compare, s_format("number <= %d",compare)}
 	end,
 
 	NumberInRange = function(val,min,max)
-		return {isnumber(val) and val >= min and val <= max, s_format("%d <= number <= %d",min,max)}
+		return {val, isnumber(val) and val >= min and val <= max, s_format("%d <= number <= %d",min,max)}
 	end,
 
 	String = function(val)
-		return {isstring(val), "string"}
+		return {val, isstring(val), "string"}
 	end,
 
 	StringNotEmpty = function(val)
-		return {isstring(val), "string (len > 0)"}
+		return {val, isstring(val), "string (len > 0)"}
 	end,
 
 	Table = function(val)
-		return {istable(val), "table"}
+		return {val, istable(val), "table"}
 	end,
 
 	TableSequential = function(val)
-		return {istable(val) and table.IsSequential(val), "sequential table"}
+		return {val, istable(val) and table.IsSequential(val), "sequential table"}
 	end,
 
 	TableMeta = function(val,compare,typeName)
-		return {istable(val) and getmetatable(val).__index == compare, typeName}
+		return {val, istable(val) and getmetatable(val).__index == compare, typeName}
 	end,
 
 	Bool = function(val)
-		return {isbool(val), "bool"}
+		return {val, isbool(val), "bool"}
 	end,
 
 	Function = function(val)
-		return {isfunction(val), "function"}
+		return {val, isfunction(val), "function"}
 	end,
 
 	Entity = function(val)
-		return {isentity(val) and IsValid(val), "valid entity"}
+		return {val, isentity(val) and IsValid(val), "valid entity"}
 	end,
 
 	Player = function(val)
-		return {isentity(val) and IsValid(val) and val:IsPlayer(), "valid player"}
+		return {val, isentity(val) and IsValid(val) and val:IsPlayer(), "valid player"}
 	end,
 
 	Color = function(val)
-		return {IsColor(val), "color"}
+		return {val, IsColor(val), "color"}
 	end,
 
 	Vector = function(val)
-		return {isvector(val), "Vector"}
+		return {val, isvector(val), "Vector"}
 	end,
 
 	Angle = function(val)
-		return {isangle(val), "Angle"}
+		return {val, isangle(val), "Angle"}
 	end,
 
 	KClass = function(val,compare,typeName)
-		return {kc_Is(val,compare),typeName}
+		return {val, kc_Is(val,compare), typeName}
 	end,
 }
 
 ---SHARED,STATIC<br>
 ---Validate function argument.
 ---@param name string
----@param assertion [boolean, string]
+---@param assertion [any, boolean, string]
+---@return any value The value passed, if valid.
 function KError.ValidateArg(name,assertion)
-	if assertion[1] then return end
-	error(s_format("arg [%s]: expected [%s].",name,assertion[2]))
+	if assertion[ASSERTION_RESULT] then return assertion[ASSERTION_VALUE] end
+
+	error(s_format("arg [%s]: expected [%s].",name,assertion[ASSERTION_EXPECTATION]))
 end
 
 ---SHARED,STATIC<br>
 ---Validate function table argument values.
 ---@param name string
----@param keyAssertion [boolean, string]
----@param valueAssertion [boolean, string]
+---@param keyAssertion [any, boolean, string]
+---@param valueAssertion [any, boolean, string]
+---@return any key The key passed, if valid.
+---@return any value The value passed, if valid.
 function KError.ValidateKVArg(name,keyAssertion,valueAssertion)
-	if keyAssertion[1] and keyAssertion[1] then return end
-	error(s_format("arg [%s]: expected key [%s], expected value [%s].",name,keyAssertion[2],valueAssertion[2]))
+	if keyAssertion[ASSERTION_RESULT] and valueAssertion[ASSERTION_RESULT] then
+		return keyAssertion[ASSERTION_VALUE],valueAssertion[ASSERTION_VALUE]
+	end
+
+	error(s_format("arg [%s]: expected key [%s], expected value [%s].",name,keyAssertion[ASSERTION_EXPECTATION],valueAssertion[ASSERTION_EXPECTATION]))
 end

@@ -310,15 +310,15 @@ KScene.CreateWithBones = getFactory(function(kModelDataBoneGroups)
 
 	local boneCount = 0
 	for boneName,group in pairs(kModelDataBoneGroups) do
-		KError.ValidateKVArg("kModelDataBoneGroups",KVarCondition.String(boneName),KVarCondition.Table(group))
+		KError.ValidateKVArg("kModelDataBoneGroups",KVarConditions.String(boneName),KVarConditions.Table(group))
 		boneCount = boneCount + 1
 		boneNameIndexLookup[boneName] = boneCount
 
 		for k,modelData in pairs(group) do
 			KError.ValidateKVArg(
 				string.format("kModelDataBoneGroups[%s]",boneName),
-				KVarCondition.Number(k),
-				KVarCondition.KClass(modelData,KModelData,modelData))
+				KVarConditions.Number(k),
+				KVarConditions.KClass(modelData,KModelData,modelData))
 
 			modelBoneLookup[modelData] = boneCount
 			t_insert(kModelDataTable,modelData)
