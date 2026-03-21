@@ -3,15 +3,26 @@ local setmetatable = setmetatable
 local rawset = rawset
 local classInternalsLookup = setmetatable({},{__mode = "k"})
 
+---@class KClassParams
+---@field InheritedClass KClass
+---@field Abstract boolean
+
 local baseClassArgs,currObj
 ---SHARED<br>
 ---OOP implementation<br>
 ---@class KClass
----@overload fun(publicConstructor?: (fun(...): table), inheritedClass?: KClass) : (table, fun(any: any): table?)
+---@overload fun(publicConstructor?: (fun(...): table), params?: KClass) : (table, fun(any: any): table?)
 KClass = setmetatable({},{
-	__call = function(_,publicConstructor,inheritedClass)
+	__call = function(_,publicConstructor,params)
 		if publicConstructor then KError.ValidateArg("constructor",KVarConditions.Function(publicConstructor)) end
-		if inheritedClass then KError.ValidateArg("inheritedClass",KVarConditions.KClass(inheritedClass)) end
+
+		params = params or {}
+
+		local inheritedClass = params.InheritedClass
+		if inheritedClass then KError.ValidateArg("params.inheritedClass",KVarConditions.KClass(inheritedClass)) end
+
+		local abstract = (params.Abstract == true) and true or false
+
 		local classMetatable = {}
 		local class = setmetatable({},classMetatable)
 
@@ -67,9 +78,15 @@ KClass = setmetatable({},{
 		if publicConstructor then
 			classInternals.PublicConstructor = publicConstructor
 
-			local publicFactory = getObjectFactory(publicConstructor)
-			classMetatable.__call = function(_,...)
-				return publicFactory(...)
+			if abstract then
+				classMetatable.__call = function(_,...)
+					error("This KClass is abstract and is not meant to be instantiated at this level!")
+				end
+			else
+				local publicFactory = getObjectFactory(publicConstructor)
+				classMetatable.__call = function(_,...)
+					return publicFactory(...)
+				end
 			end
 		end
 
