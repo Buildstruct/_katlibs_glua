@@ -11,7 +11,7 @@ local baseClassArgs,currObj
 ---SHARED<br>
 ---OOP implementation<br>
 ---@class KClass
----@overload fun(publicConstructor?: (fun(...): table), params?: KClass) : (table, fun(any: any): table?)
+---@overload fun(publicConstructor?: (fun(...): table?), params?: KClass) : (table, fun(any: any): table?)
 KClass = setmetatable({},{
 	__call = function(_,publicConstructor,params)
 		if publicConstructor then KError.ValidateArg("constructor",KVarConditions.Function(publicConstructor)) end
@@ -42,7 +42,7 @@ KClass = setmetatable({},{
 			local basePopulateObjectPriv = inheritedInternals.PopulateObjectPriv
 			function populateObjectPriv(object,constructor,...)
 				baseClassArgs = nil
-				classPrivDirectory[object] = constructor(...)
+				classPrivDirectory[object] = constructor(...) or {}
 				if not baseClassArgs then error("Failed to call KClass.CallBaseConstructor in inherited class!") end
 				basePopulateObjectPriv(object,inheritedPublicConstructor,unpack(baseClassArgs))
 			end
@@ -55,7 +55,7 @@ KClass = setmetatable({},{
 			})
 		else
 			function populateObjectPriv(object,constructor,...)
-				classPrivDirectory[object] = constructor(...)
+				classPrivDirectory[object] = constructor(...) or {}
 			end
 
 			classInternals.ParentClasses = setmetatable({
