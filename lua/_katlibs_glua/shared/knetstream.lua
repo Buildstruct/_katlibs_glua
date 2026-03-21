@@ -42,8 +42,8 @@ do
     ---@param id string
     ---@param data string
     function KNetStream.SendData(id,data,players)
-        KError.ValidateArg(id",KVarCondition.String(id))
-        KError.ValidateArg(data",KVarCondition.String(data))
+        KError.ValidateArg("id",KVarCondition.String(id))
+        KError.ValidateArg("data",KVarCondition.String(data))
 
         local dataSize = #data
         local numChunks = math.ceil(dataSize / MAX_BYTES_PER_SECOND)
@@ -74,8 +74,8 @@ do
     ---@param id string
     ---@param callback fun(data : string, ply : Player?)?
     function KNetStream.ReceiveData(id,callback)
-        KError.ValidateArg(id",KVarCondition.String(id))
-        if callback then KError.ValidateArg(callback",KVarCondition.Function(callback)) end
+        KError.ValidateArg("id",KVarCondition.String(id))
+        if callback then KError.ValidateArg("callback",KVarCondition.Function(callback)) end
 
         receivers[id] = callback
     end

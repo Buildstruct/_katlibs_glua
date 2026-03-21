@@ -11,8 +11,8 @@ local getPriv
 ---@class KRegenResourcePool
 ---@overload fun(max: number, regenRatePerSecond: number): KRegenResourcePool
 KRegenResourcePool,getPriv = KClass(function(max,regenRatePerSecond)
-    KError.ValidateArg(max",KVarCondition.NumberGreaterOrEqual(max,0))
-    KError.ValidateArg(regenRatePerSecond",KVarCondition.NumberGreaterOrEqual(regenRatePerSecond,0))
+    KError.ValidateArg("max",KVarCondition.NumberGreaterOrEqual(max,0))
+    KError.ValidateArg("regenRatePerSecond",KVarCondition.NumberGreaterOrEqual(regenRatePerSecond,0))
 
     return {
         Amount = max,
@@ -28,7 +28,7 @@ end)
 ---@return boolean success
 function KRegenResourcePool:Use(cost)
     local priv = getPriv(self)
-    KError.ValidateArg(cost",KVarCondition.NumberGreaterOrEqual(cost,0))
+    KError.ValidateArg("cost",KVarCondition.NumberGreaterOrEqual(cost,0))
 
     regenerating[priv] = true
     hook.Add("Tick","KRegenResourcePool",Tick_Regen)
@@ -60,8 +60,8 @@ end
 ---@param key string
 ---@param func function
 function KRegenResourcePool:SetHook(key,func)
-    KError.ValidateArg(key",KVarCondition.String(key))
-    if func ~= nil then KError.ValidateArg(func",KVarCondition.Function(func)) end
+    KError.ValidateArg("key",KVarCondition.String(key))
+    if func ~= nil then KError.ValidateArg("func",KVarCondition.Function(func)) end
 
     getPriv(self).Hooks[key] = func
 end

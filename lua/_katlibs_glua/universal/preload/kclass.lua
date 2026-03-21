@@ -14,8 +14,8 @@ local baseClassArgs,currObj
 ---@overload fun(publicConstructor?: (fun(...): table), inheritedClass?: KClass) : (table, fun(any: any): table?)
 KClass = setmetatable({},{
 	__call = function(_,publicConstructor,inheritedClass)
-		if publicConstructor then KError.ValidateArg(constructor",KVarCondition.Function(publicConstructor)) end
-		if inheritedClass then KError.ValidateArg(inheritedClass",KVarCondition_KClass(inheritedClass)) end
+		if publicConstructor then KError.ValidateArg("constructor",KVarCondition.Function(publicConstructor)) end
+		if inheritedClass then KError.ValidateArg("inheritedClass",KVarCondition_KClass(inheritedClass)) end
 		local classMetatable = {}
 		local class = setmetatable({},classMetatable)
 

@@ -85,45 +85,45 @@ local halos = {}
 ---@param key any
 ---@param params table
 function KHalo.Add(key,params)
-	KError.ValidateArg(key",KVarCondition.NotNull(key))
-	KError.ValidateArg(params",KVarCondition.Table(params))
+	KError.ValidateArg("key",KVarCondition.NotNull(key))
+	KError.ValidateArg("params",KVarCondition.Table(params))
 
-	KError.ValidateArg(params.Ents",KVarCondition.Table(params.Ents))
+	KError.ValidateArg("params.Ents",KVarCondition.Table(params.Ents))
 	local entLookup = {}
 	for k,v in pairs(params.Ents) do
-		KError.ValidateArg(params.Ents." .. k,KVarCondition.Entity(v))
+		KError.ValidateArg("params.Ents." .. k,KVarCondition.Entity(v))
 		entLookup[v] = true
 	end
 	params.Ents = entLookup
 
-	KError.ValidateArg(params.Color",KVarCondition.Color(params.Color))
+	KError.ValidateArg("params.Color",KVarCondition.Color(params.Color))
 
 	if params.Hidden == nil then params.Hidden = false end
-	KError.ValidateArg(params.Hidden",KVarCondition.Bool(params.Hidden))
+	KError.ValidateArg("params.Hidden",KVarCondition.Bool(params.Hidden))
 
 	if params.BlurX == nil then params.BlurX = 2 end
-	KError.ValidateArg(params.BlurX",KVarCondition.NumberGreaterOrEqual(params.BlurX,0))
+	KError.ValidateArg("params.BlurX",KVarCondition.NumberGreaterOrEqual(params.BlurX,0))
 
 	if params.BlurY == nil then params.BlurY = 2 end
-	KError.ValidateArg(params.BlurY",KVarCondition.NumberGreaterOrEqual(params.BlurY,0))
+	KError.ValidateArg("params.BlurY",KVarCondition.NumberGreaterOrEqual(params.BlurY,0))
 
 	if params.DrawPasses == nil then params.DrawPasses = 1 end
-	KError.ValidateArg(params.DrawPasses",KVarCondition.NumberInRange(params.DrawPasses,1,32))
+	KError.ValidateArg("params.DrawPasses",KVarCondition.NumberInRange(params.DrawPasses,1,32))
 
 	if params.Additive == nil then params.Additive = true end
-	KError.ValidateArg(params.Additive",KVarCondition.Bool(params.Additive))
+	KError.ValidateArg("params.Additive",KVarCondition.Bool(params.Additive))
 
 	if params.IgnoreZ == nil then params.IgnoreZ = false end
-	KError.ValidateArg(params.IgnoreZ",KVarCondition.Bool(params.IgnoreZ))
+	KError.ValidateArg("params.IgnoreZ",KVarCondition.Bool(params.IgnoreZ))
 
 	if params.Amount == nil then params.Amount = 1 end
-	KError.ValidateArg(params.Amount",KVarCondition.NumberInRange(params.Amount,0,32))
+	KError.ValidateArg("params.Amount",KVarCondition.NumberInRange(params.Amount,0,32))
 
 	if params.SphericalSize == nil then params.SphericalSize = 1 end
-	KError.ValidateArg(params.SphericalSize",KVarCondition.NumberGreaterOrEqual(params.SphericalSize,0))
+	KError.ValidateArg("params.SphericalSize",KVarCondition.NumberGreaterOrEqual(params.SphericalSize,0))
 
 	if params.Shape == nil then params.Shape = 1 end
-	KError.ValidateArg(params.Shape",KVarCondition.NumberGreaterOrEqual(params.Shape,1))
+	KError.ValidateArg("params.Shape",KVarCondition.NumberGreaterOrEqual(params.Shape,1))
 
 	halos[key] = params
 	hook.Add("PostDrawEffects","RenderKHalos",drawHaloHook)
@@ -139,11 +139,11 @@ end
 ---Add a entity to a registered KHalo.
 ---@param ent Entity
 function KHalo.AddEnt(key,ent)
-	KError.ValidateArg(key",KVarCondition.NotNull(key))
+	KError.ValidateArg("key",KVarCondition.NotNull(key))
 	local tab = halos[key]
 	if not tab then return end
 
-	KError.ValidateArg(ent",KVarCondition.Entity(ent))
+	KError.ValidateArg("ent",KVarCondition.Entity(ent))
 	tab.Ents[ent] = true
 end
 
@@ -151,7 +151,7 @@ end
 ---Remove a entity from a registered KHalo.
 ---@param ent Entity
 function KHalo.RemoveEnt(key,ent)
-	KError.ValidateArg(key",KVarCondition.NotNull(key))
+	KError.ValidateArg("key",KVarCondition.NotNull(key))
 	local tab = halos[key]
 	if not tab then return end
 

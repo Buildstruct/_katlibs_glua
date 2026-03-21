@@ -20,7 +20,7 @@ if SERVER then
     ---Writes an entity to the net message to be read as a KNWEntity clientside.
     ---@param ent Entity
     function net.WriteKNWEntity(ent)
-        KError.ValidateArg(ent",KVarCondition.Entity(ent))
+        KError.ValidateArg("ent",KVarCondition.Entity(ent))
 
         n_WriteUInt(e_EntIndex(ent),13)
         activeEnts[ent] = true
@@ -143,7 +143,7 @@ elseif CLIENT then
     --- @param id any
     --- @param func function?
     function KNWEntity:AddHook(hooktype,id,func)
-        if func then KError.ValidateArg(func",KVarCondition.Function(func)) end
+        if func then KError.ValidateArg("func",KVarCondition.Function(func)) end
 
         local hookTab = getPriv(self).Hooks[hooktype]
         if not hookTab then return end
@@ -154,7 +154,7 @@ elseif CLIENT then
     ---Calls a function if the KNWEntity's Entity is currently valid.
     --- @param func function
     function KNWEntity:CallIfValid(func,...)
-        KError.ValidateArg(func",KVarCondition.Function(func))
+        KError.ValidateArg("func",KVarCondition.Function(func))
         if not IsValid(Entity(getPriv(self).EntIndex)) then return end
         func(...)
     end

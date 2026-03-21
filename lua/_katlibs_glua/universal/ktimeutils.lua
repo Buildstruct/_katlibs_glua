@@ -18,8 +18,8 @@ local KVarCondition_Function = KVarCondition.Function
 ---@param func fun(up: number)
 function KTimeUtils.TweenAsync(duration,func)
     assert(co_running(),"TweenAsync called outside of coroutine!")
-    KError.ValidateArg(duration",KVarCondition_NumberGreater(duration,0))
-    KError.ValidateArg(func",KVarCondition_Function(func))
+    KError_ValidateArg("duration",KVarCondition_NumberGreater(duration,0))
+    KError_ValidateArg("func",KVarCondition_Function(func))
 
     local savedTime = CurTime()
     local DT

@@ -78,9 +78,9 @@ local getPriv
 ---@class KModule
 ---@overload fun(moduleName: string, entryPoint: fun(...), env : table?): KModule
 KModule,getPriv = KClass(function(moduleName,entryPoint,env)
-    KError.ValidateArg(moduleName",KVarCondition.String(moduleName))
-    KError.ValidateArg(entryPoint",KVarCondition.Function(entryPoint))
-    if env then KError.ValidateArg(env",KVarCondition.Table(env)) end
+    KError.ValidateArg("moduleName",KVarCondition.String(moduleName))
+    KError.ValidateArg("entryPoint",KVarCondition.Function(entryPoint))
+    if env then KError.ValidateArg("env",KVarCondition.Table(env)) end
 
     if activeModules[moduleName] then activeModules[moduleName]:Dispose() end
 
@@ -122,7 +122,7 @@ KModule,getPriv = KClass(function(moduleName,entryPoint,env)
         end
 
         function addDisposeCB(key,callback)
-            if callback then KError.ValidateArg(callback",KVarCondition.Function(callback)) end
+            if callback then KError.ValidateArg("callback",KVarCondition.Function(callback)) end
             disposeCBs[key] = callback
         end
 
