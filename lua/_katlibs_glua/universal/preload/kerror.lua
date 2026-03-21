@@ -106,21 +106,19 @@ KVarCondition = {
 
 ---SHARED,STATIC<br>
 ---Validate function argument.
----@param index number
 ---@param name string
 ---@param assertion [boolean, string]
-function KError.ValidateArg(index,name,assertion)
+function KError.ValidateArg(name,assertion)
 	if assertion[1] then return end
-	error(s_format("arg #%i, [%s]: expected [%s].",index,name,assertion[2]))
+	error(s_format("arg [%s]: expected [%s].",name,assertion[2]))
 end
 
 ---SHARED,STATIC<br>
 ---Validate function table argument values.
----@param index number
 ---@param name string
 ---@param keyAssertion [boolean, string]
 ---@param valueAssertion [boolean, string]
-function KError.ValidateKVArg(index,name,keyAssertion,valueAssertion)
+function KError.ValidateKVArg(name,keyAssertion,valueAssertion)
 	if keyAssertion[1] and keyAssertion[1] then return end
-	error(s_format("arg #%i, [%s]: expected key [%s], expected value [%s].",index,name,keyAssertion[2],valueAssertion[2]))
+	error(s_format("arg [%s]: expected key [%s], expected value [%s].",name,keyAssertion[2],valueAssertion[2]))
 end

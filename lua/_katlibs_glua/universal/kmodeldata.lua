@@ -17,9 +17,9 @@ local getPriv
 ---@class KModelData
 ---@overload fun(pos: Vector, ang: Angle, model: string): KModelData
 KModelData,getPriv = KClass(function(pos,ang,model)
-    KError.ValidateArg(1,"pos",KVarCondition.Vector(pos))
-    KError.ValidateArg(2,"ang",KVarCondition.Angle(ang))
-    KError.ValidateArg(3,"model",KVarCondition.String(model))
+    KError.ValidateArg(pos",KVarCondition.Vector(pos))
+    KError.ValidateArg(ang",KVarCondition.Angle(ang))
+    KError.ValidateArg(model",KVarCondition.String(model))
 
     return {
         Model = model,
@@ -31,7 +31,7 @@ end)
 ---SHARED<br>
 ---@param value Vector
 function KModelData:SetPos(value)
-    KError.ValidateArg(1,"value",KVarCondition.Vector(value))
+    KError.ValidateArg(value",KVarCondition.Vector(value))
     getPriv(self).Pos = value
 end
 
@@ -44,7 +44,7 @@ end
 ---SHARED<br>
 ---@param value Angle
 function KModelData:SetAng(value)
-    KError.ValidateArg(1,"value",KVarCondition.Angle(value))
+    KError.ValidateArg(value",KVarCondition.Angle(value))
     getPriv(self).Angles = value
 end
 
@@ -57,7 +57,7 @@ end
 ---SHARED<br>
 ---@param value string
 function KModelData:SetModel(value)
-    KError.ValidateArg(1,"value",KVarCondition.String(value))
+    KError.ValidateArg(value",KVarCondition.String(value))
     getPriv(self).Model = value
 end
 
@@ -75,7 +75,7 @@ function KModelData:SetColor(value)
         return
     end
 
-    KError.ValidateArg(1,"value",KVarCondition.Color(value))
+    KError.ValidateArg(value",KVarCondition.Color(value))
     getPriv(self).Color = value
 end
 
@@ -93,7 +93,7 @@ function KModelData:SetMaterial(value)
         return
     end
 
-    KError.ValidateArg(1,"value",KVarCondition.String(value))
+    KError.ValidateArg(value",KVarCondition.String(value))
     getPriv(self).Material = value
 end
 
@@ -106,7 +106,7 @@ end
 ---SHARED<br>
 ---@param value Vector
 function KModelData:SetScale(value)
-    KError.ValidateArg(1,"value",KVarCondition.Vector(value))
+    KError.ValidateArg(value",KVarCondition.Vector(value))
     if value == defaultValues.Scale then
         getPriv(self).Scale = nil
         return
@@ -135,7 +135,7 @@ function KModelData:SetRenderGroup(value)
         return
     end
 
-    KError.ValidateArg(1,"value",KVarCondition.NumberInRange(value,7,9))
+    KError.ValidateArg(value",KVarCondition.NumberInRange(value,7,9))
     getPriv(self).RenderGroup = value
 end
 
@@ -155,7 +155,7 @@ function KModelData:SetRenderMode(value)
         return
     end
 
-    KError.ValidateArg(1,"value",KVarCondition.NumberInRange(value,0,10))
+    KError.ValidateArg(value",KVarCondition.NumberInRange(value,0,10))
     getPriv(self).RenderMode = value
 end
 
@@ -172,7 +172,7 @@ end
 ---@param localPos Vector?
 ---@param localNormal Vector?
 function KModelData:SetClip(key,localPos,localNormal)
-    KError.ValidateArg(1,"key",KVarCondition.String(key))
+    KError.ValidateArg(key",KVarCondition.String(key))
 
     local priv = getPriv(self)
     if localPos == nil and localNormal == nil then
@@ -180,8 +180,8 @@ function KModelData:SetClip(key,localPos,localNormal)
         priv.Clip[key] = nil
         if not next(priv.Clip) then priv.Clip = nil end
     else
-        KError.ValidateArg(2,"localPos",KVarCondition.Vector(localPos))
-        KError.ValidateArg(3,"localNormal",KVarCondition.Vector(localNormal))
+        KError.ValidateArg(localPos",KVarCondition.Vector(localPos))
+        KError.ValidateArg(localNormal",KVarCondition.Vector(localNormal))
         if not priv.Clip then priv.Clip = {} end
 
         priv.Clip[key] = {
@@ -214,8 +214,8 @@ end
 ---@param index number
 ---@param value string
 function KModelData:SetSubmaterial(index,value)
-    KError.ValidateArg(1,"index",KVarCondition.NumberGreater(index,0))
-    KError.ValidateArg(2,"value",KVarCondition.String(value))
+    KError.ValidateArg(index",KVarCondition.NumberGreater(index,0))
+    KError.ValidateArg(value",KVarCondition.String(value))
 
     local priv = getPriv(self)
 

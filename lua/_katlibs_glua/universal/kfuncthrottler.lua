@@ -8,7 +8,7 @@ local getPriv
 ---@class KFuncThrottler
 ---@overload fun(limiter: KRegenResourcePool): KFuncThrottler
 KFuncThrottler,getPriv = KClass(function(limiter)
-    KError.ValidateArg(1,"limiter",KVarCondition.TableMeta(limiter,KRegenResourcePool,"KRegenResourcePool"))
+    KError.ValidateArg(limiter",KVarCondition.TableMeta(limiter,KRegenResourcePool,"KRegenResourcePool"))
 
     uidItr = uidItr + 1
     return {
@@ -35,8 +35,8 @@ function KFuncThrottler:Execute(cost,func,...)
 
     local limiter = priv.Limiter
     local max = limiter:GetMax()
-    KError.ValidateArg(1,"cost",KVarCondition.NumberInRange(cost,0,max))
-    KError.ValidateArg(2,"func",KVarCondition.Function(func))
+    KError.ValidateArg(cost",KVarCondition.NumberInRange(cost,0,max))
+    KError.ValidateArg(func",KVarCondition.Function(func))
 
     if not queue:Any() and limiter:Use(cost) then
         func(...)

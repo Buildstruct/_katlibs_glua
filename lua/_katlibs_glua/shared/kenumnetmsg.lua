@@ -23,10 +23,10 @@ end
 ---@return fun(messageEnum: number) netMsgStart
 ---@return fun(messageEnum: number, func: function) netMsgReceiver
 function KEnumNetMsg(netstring,enums)
-    KError.ValidateArg(1,"netstring",KVarCondition.StringNotEmpty(netstring))
-    KError.ValidateArg(2,"enums",KVarCondition.Table(enums))
+    KError.ValidateArg(netstring",KVarCondition.StringNotEmpty(netstring))
+    KError.ValidateArg(enums",KVarCondition.Table(enums))
     for k,v in pairs(enums) do
-        KError.ValidateKVArg(2,"enums." .. k,KVarCondition.StringNotEmpty(netstring),KVarCondition.NumberGreaterOrEqual(v,0))
+        KError.ValidateKVArg(enums." .. k,KVarCondition.StringNotEmpty(netstring),KVarCondition.NumberGreaterOrEqual(v,0))
     end
 
     if SERVER then util.AddNetworkString(netstring) end

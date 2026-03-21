@@ -1,4 +1,6 @@
 local VERTEX_MAX_DECIMALS = 4
+local MESH_MAX_BONES = 52
+local MAX_TRIS_PER_MESH = 65535
 
 ---@class VMatrix
 local vm_meta = FindMetaTable("VMatrix")
@@ -23,6 +25,7 @@ local mesh_TexCoord = mesh.TexCoord
 local mesh_TangentS = mesh.TangentS
 local mesh_TangentT = mesh.TangentT
 local mesh_UserData = mesh.UserData
+local mesh_BoneData = mesh.BoneData
 local mesh_Color = mesh.Color
 local mesh_AdvanceVertex = mesh.AdvanceVertex
 local mesh_End = mesh.End
@@ -179,7 +182,7 @@ do --mesh clipping
 	end
 end
 
-local splitByVisualProperties
+local convertModelDataToMeshVertexes
 do --convert KModelData into MeshVertexes
 	--https://wiki.facepunch.com/gmod/Structures/MeshVertex
 
@@ -199,7 +202,7 @@ do --convert KModelData into MeshVertexes
 	local modelMatrix = Matrix()
 	local ANG_FIX = Angle(0,90,0)
 
-	local function appendModelTriangleData(triangles,modelData)
+	local function appendTriangleData(triangles,modelData,boneIndex)
 		vm_Identity(normalMatrix)
 		vm_SetAngles(normalMatrix,kmd_GetAngles(modelData))
 		vm_Rotate(modelMatrix,ANG_FIX)
@@ -224,7 +227,7 @@ do --convert KModelData into MeshVertexes
 			local binormal = meshVertex.binormal and roundVector(normalMatrix * meshVertex.binormal)
 			local tangent = meshVertex.tangent and roundVector(normalMatrix * meshVertex.tangent)
 			local pos = roundVector(modelMatrix * meshVertex.pos)
-
+			local weight = boneIndex and {{bone = boneIndex, weight = 1}}
 			t_insert(triangles,{
 				pos = pos,
 				normal = normal,
@@ -233,19 +236,22 @@ do --convert KModelData into MeshVertexes
 				userdata = meshVertex.userdata,
 				u = meshVertex.u,
 				v = meshVertex.v,
+				weight = weight,
 			})
 		end
 	end
 
-	function splitByVisualProperties(kModelDataTable)
+	function convertModelDataToMeshVertexes(kModelDataTable,modelBoneLookup)
 		local meshData = {}
 
 		for i = 1,#kModelDataTable do
 			local currModelData = kModelDataTable[i]
+
 			local material = kmd_GetMaterial(currModelData)
 			local color = kmd_GetColor(currModelData)
 			local renderGroup = kmd_GetRenderGroup(currModelData)
 			local renderMode = kmd_GetRenderMode(currModelData)
+			local boneIndex = modelBoneLookup[currModelData]
 
 			local visualPropertyKey = util_SHA256(
 				material
@@ -265,18 +271,10 @@ do --convert KModelData into MeshVertexes
 				meshData[visualPropertyKey] = visualPropertyGroup
 			end
 
-			appendModelTriangleData(visualPropertyGroup.TriangleData,currModelData)
+			appendTriangleData(visualPropertyGroup.TriangleData,currModelData,boneIndex)
 		end
 
 		return meshData
-	end
-end
-
-local function buildRenderFunction(newMesh,material,colorRed,colorGreen,colorBlue,colorAlpha)
-	return function()
-		r_SetColorModulation(colorRed,colorGreen,colorBlue)
-		r_SetBlend(colorAlpha)
-		kmr_DrawMesh(newMesh,material)
 	end
 end
 
@@ -284,14 +282,58 @@ local getPriv
 ---SHARED<br>
 ---A container object for IMeshes created from KModelData.
 ---@class KScene
----@overload fun(kModelDataTable: KModelData[]): KScene
-KScene,getPriv = KClass(function(kModelDataTable)
+---@overload fun(modelDataTable: KModelData[]): KScene
+KScene,getPriv = KClass(function(modelDataTable)
 	return {
-		MeshData = splitByVisualProperties(kModelDataTable),
+		MeshData = convertModelDataToMeshVertexes(modelDataTable,{}),
 		Meshes = {},
 		RenderOpaque = {},
 		RenderBoth = {},
 		RenderTransluscent = {},
+		BoneIndexes = {},
+	}
+end)
+
+local getFactory = getPriv(KScene).GetFactory
+
+local jsonConstructor = getFactory(function(priv)
+	return priv
+end)
+
+---SHARED<br>
+---Creates a new KScene with bones from named groups of KModelData.
+---@type fun(kModelDataGroups: {[string] : KModelData[]} ): boolean
+KScene.CreateWithBones = getFactory(function(kModelDataBoneGroups)
+	local kModelDataTable = {}
+	local modelBoneLookup = {}
+	local boneNameIndexLookup = {}
+
+	local boneCount = 0
+	for boneName,group in pairs(kModelDataBoneGroups) do
+		KError.ValidateKVArg(kModelDataBoneGroups",KVarCondition.String(boneName),KVarCondition.Table(group))
+		boneCount = boneCount + 1
+		boneNameIndexLookup[boneName] = boneCount
+
+		for k,modelData in pairs(group) do
+			KError.ValidateKVArg(1,
+				string.format("kModelDataBoneGroups[%s]",boneName),
+				KVarCondition.Number(k),
+				KVarCondition.KClass(modelData,KModelData,modelData))
+
+			modelBoneLookup[modelData] = boneCount
+			t_insert(kModelDataTable,modelData)
+		end
+	end
+	assert(boneCount < MESH_MAX_BONES,"Too many bones! Max: " .. MESH_MAX_BONES)
+
+	return {
+		MeshData = convertModelDataToMeshVertexes(kModelDataTable,modelBoneLookup),
+		Meshes = {},
+		RenderOpaque = {},
+		RenderBoth = {},
+		RenderTransluscent = {},
+		BoneIndexes = boneNameIndexLookup,
+		BoneMatrices = {},
 	}
 end)
 
@@ -307,10 +349,19 @@ function KScene:Destroy()
 	priv.RenderOpaque = {}
 	priv.RenderBoth = {}
 	priv.RenderTransluscent = {}
+	priv.BoneMatrices = {}
 end
 local ksc_Destroy = KScene.Destroy
 
-local MAX_TRIS_PER_MESH = 65535
+
+local function buildRenderFunction(newMesh,material,colorRed,colorGreen,colorBlue,colorAlpha)
+	return function(boneData)
+		r_SetColorModulation(colorRed,colorGreen,colorBlue)
+		r_SetBlend(colorAlpha)
+		kmr_DrawMesh(newMesh,material,boneData)
+	end
+end
+
 function KScene:Compile()
 	ksc_Destroy(self)
 	local priv = getPriv(self)
@@ -352,6 +403,12 @@ function KScene:Compile()
 
 				local userdata = meshVertex.userdata
 				if userdata then mesh_UserData(userdata[1],userdata[2],userdata[3],userdata[4]) end
+
+				local weights = meshVertex.weights
+				if weights then
+					mesh_BoneData(0,weights.bone,weights.weight)
+					mesh_BoneData(1,weights.bone,0)
+				end
 
 				mesh_Color(255,255,255,255)
 
@@ -407,6 +464,7 @@ local visualPropertyGroupSanitizer = KTableSanitizer({
 	RenderGroup = "number",
 	RenderMode = "number",
 	TriangleData = "TriangleData[]",
+	BoneIndexes = "number[]",
 },{
 	TriangleData = {
 		color = {
@@ -421,12 +479,20 @@ local visualPropertyGroupSanitizer = KTableSanitizer({
 		pos = "Vector",
 		u = "number?",
 		v = "number?",
+		userdata = "UserData[]?",
+		weights = "Weight[]?",
+	},
+	UserData = {
+		["1"] = "number",
+		["2"] = "number",
+		["3"] = "number",
+		["4"] = "number",
+	},
+	Weight = {
+		bone = "number",
+		weight = "number",
 	}
 })
-
-local jsonConstructor = getPriv(KScene).GetFactory(function(priv)
-	return priv
-end)
 
 ---SHARED<br>
 ---Gets a JSON-serializable table representing this object that can be used to recreate this object later.
@@ -435,12 +501,7 @@ function KScene:GetSerializable()
 	local priv = getPriv(self)
 	---@cast priv table
 
-	local copy = table.Copy(priv)
-	copy.Meshes = nil
-	copy.RenderOpaque = nil
-	copy.RenderBoth = nil
-	copy.RenderTransluscent = nil
-	return copy
+	return {MeshData = table.Copy(priv.MeshData)}
 end
 
 ---SHARED,STATIC<br>

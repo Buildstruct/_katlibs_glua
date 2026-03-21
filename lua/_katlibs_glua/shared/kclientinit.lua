@@ -47,8 +47,8 @@ if SERVER then
 	---@param key string
 	---@param func function
 	function KClientInit.SendClientData(key,func)
-		KError.ValidateArg(1,"key",KVarCondition.String(key))
-		KError.ValidateArg(2,"func",KVarCondition.Function(func))
+		KError.ValidateArg(key",KVarCondition.String(key))
+		KError.ValidateArg(func",KVarCondition.Function(func))
 
 		receivers[key] = func
 	end
@@ -64,8 +64,8 @@ elseif CLIENT then
 	---@param key string
 	---@param func function
 	function KClientInit.ReceiveServerData(key,func)
-		KError.ValidateArg(1,"key",KVarCondition.String(key))
-		KError.ValidateArg(2,"func",KVarCondition.Function(func))
+		KError.ValidateArg(key",KVarCondition.String(key))
+		KError.ValidateArg(func",KVarCondition.Function(func))
 
 		receivers[key] = func
 	end
