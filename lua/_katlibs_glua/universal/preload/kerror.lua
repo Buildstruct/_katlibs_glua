@@ -1,4 +1,3 @@
-if KError then return end
 
 local ASSERTION_VALUE = 1
 local ASSERTION_RESULT = 2
@@ -18,9 +17,9 @@ local s_format = string.format
 local error = error
 
 local kc_Is
-hook.Add("KatLibsLoaded","KError",function()
+--hook.Add("KatLibsLoaded","KError",function()
 	kc_Is = KClass.Is
-end)
+--end)
 
 ---SHARED,STATIC<br>
 ---Conditions for parameter checking.
@@ -122,6 +121,7 @@ KVarConditions = {
 
 	---@return [KClass, boolean, string]
 	KClass = function(val,compare,typeName)
+		if compare == nil then return {val, kc_Is(val), "KClass"} end
 		return {val, kc_Is(val,compare), typeName}
 	end,
 }

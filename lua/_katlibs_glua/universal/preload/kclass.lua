@@ -22,7 +22,6 @@ KClass = setmetatable({},{
 		params = params or {}
 
 		local inheritedClass = params.InheritedClass
-		KError.ValidateNullableArg("params.InheritedClass",KVarConditions.KClass(inheritedClass))
 
 		local abstract = (params.Abstract == true) and true or false
 
@@ -36,6 +35,8 @@ KClass = setmetatable({},{
 
 		local populateObjectPriv
 		if inheritedClass then
+			assert(classInternalsLookup[inheritedClass] ~= nil,"params.InheritedClass is not a KClass!")
+
 			local inheritedInternals = classInternalsLookup[inheritedClass]
 			classMetatable.__index = inheritedClass
 
@@ -120,7 +121,7 @@ function KClass.GetSelf()
 end
 
 ---SHARED<br>
----Check if object is a KClass.
+---Check if object is a KClass object instance.
 ---@param object any
 ---@param comparisonClass? any If supplied, checks if the object is or is derived from this class.
 function KClass.Is(object,comparisonClass)
