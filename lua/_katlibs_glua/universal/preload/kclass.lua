@@ -7,11 +7,14 @@ local classInternalsLookup = setmetatable({},{__mode = "k"})
 ---@field InheritedClass KClass
 ---@field Abstract boolean
 
+---@class _KClass_Priv
+---@field GetFactory any A method that returns a new constructor for this class.
+
 local baseClassArgs,currObj
 ---SHARED<br>
 ---OOP implementation<br>
 ---@class KClass
----@overload fun(publicConstructor?: (fun(...): table?), params?: KClass) : (table, fun(any: any): table?)
+---@overload fun(publicConstructor?: (fun(...): table?), params?: table) : (class: table, getPriv: any)
 KClass = setmetatable({},{
 	__call = function(_,publicConstructor,params)
 		if publicConstructor then KError.ValidateArg("constructor",KVarConditions.Function(publicConstructor)) end
@@ -19,7 +22,7 @@ KClass = setmetatable({},{
 		params = params or {}
 
 		local inheritedClass = params.InheritedClass
-		if inheritedClass then KError.ValidateArg("params.inheritedClass",KVarConditions.KClass(inheritedClass)) end
+		KError.ValidateNullableArg("params.InheritedClass",KVarConditions.KClass(inheritedClass))
 
 		local abstract = (params.Abstract == true) and true or false
 
