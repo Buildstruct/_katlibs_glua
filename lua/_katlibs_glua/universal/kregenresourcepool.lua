@@ -9,18 +9,29 @@ local getPriv
 ---SHARED<br>
 ---A number value that regenerates over time and can be used.
 ---@class KRegenResourcePool
----@overload fun(max: number, regenRatePerSecond: number): KRegenResourcePool
-KRegenResourcePool,getPriv = KClass(function(max,regenRatePerSecond)
+---@overload fun(max: number, regenRatePerSecond: number, allowDebt?: boolean): KRegenResourcePool
+KRegenResourcePool,getPriv = KClass(function(max,regenRatePerSecond,allowDebt)
     KError.ValidateArg("max",KVarConditions.NumberGreaterOrEqual(max,0))
     KError.ValidateArg("regenRatePerSecond",KVarConditions.NumberGreaterOrEqual(regenRatePerSecond,0))
 
     return {
         Amount = max,
         Max = max,
+        AllowDebt = allowDebt or false,
         RegenRatePerTick = regenRatePerSecond * engine.TickInterval(),
-        Hooks = {},
+        Hooks = {
+            Think = {},
+            OnFull = {},
+            OnEmpty = {},
+        },
     }
 end)
+
+local function callHook(hooks,val)
+    for _,func in pairs(hooks) do
+        func(val)
+    end
+end
 
 ---SHARED<br>
 ---Uses the resource pool with the specified cost.
@@ -33,10 +44,16 @@ function KRegenResourcePool:Use(cost)
     regenerating[priv] = true
     hook.Add("Tick","KRegenResourcePool",Tick_Regen)
 
-    local val = priv.Amount - cost
-    if val < 0 then return false end
-    priv.Amount = val
+    local amount = priv.Amount
+    if amount < 0 then return false end
 
+    local newVal = amount - cost
+    if newVal <= 0 then
+        if newVal < 0 and not priv.AllowDebt then return false end
+        callHook(priv.Hooks.OnEmpty,newVal)
+    end
+
+    priv.Amount = newVal
     return true
 end
 
@@ -54,16 +71,24 @@ function KRegenResourcePool:Count()
     return getPriv(self).Amount
 end
 
----SHARED<br>
----Adds a hook to this resource pool.<br>
----Automatically clears if this object is garbage collected.
----@param key string
----@param func function
-function KRegenResourcePool:SetHook(key,func)
-    KError.ValidateArg("key",KVarConditions.String(key))
-    if func ~= nil then KError.ValidateArg("func",KVarConditions.Function(func)) end
+---@alias KRegenResourcePoolHook
+---| '"Think"' #fun(value: number) - Called every tick while the pool is regenerating.
+---| '"OnFull"' #fun(value: number) - Called once when the pool is filled.
+---| '"OnEmpty"' #fun(value: number) - Called once when the pool is depleted.
 
-    getPriv(self).Hooks[key] = func
+---CLIENT<br>
+---Register a hook with this KNWEntity.<br/>
+---Set func to nil to remove a hook.
+--- @param hooktype KRegenResourcePoolHook
+--- @param id any
+--- @param func function?
+function KRegenResourcePool:SetHook(hooktype,id,func)
+    KError.ValidateArg("key",KVarConditions.String(id))
+    KError.ValidateNullableArg("func",KVarConditions.Function(func))
+
+    local hookTab = getPriv(self).Hooks[hooktype]
+    if not hookTab then return end
+    hookTab[id] = func
 end
 
 function Tick_Regen()
@@ -73,15 +98,17 @@ function Tick_Regen()
     end
 
     for priv,_ in pairs(regenerating) do
+        local hooks = priv.Hooks
         local max = priv.Max
         local val = m_min(priv.Amount + priv.RegenRatePerTick,max)
 
         priv.Amount = val
 
-        if val == max then regenerating[priv] = nil end
-
-        for _,func in pairs(priv.Hooks) do
-            func(val)
+        if val == max then
+            callHook(hooks.OnFull,val)
+            regenerating[priv] = nil
         end
+
+        callHook(hooks.Think,val)
     end
 end

@@ -134,12 +134,13 @@ elseif CLIENT then
         return getPriv(self).IsFirstTimeNetworked
     end
 
+    ---@alias KNWEntityHook
+    ---| '"OnInitialize"' #fun(entIndex: number, ent: Entity) - Called when the entity initializes clientside.
+    ---| '"OnRemove"' #fun(entIndex: number) - Called when the entity is removed serverside.
+
     ---CLIENT<br>
     ---Register a hook with this KNWEntity.
-    ---Hooks:
-    --- - OnInitialize(number entIndex, Entity ent)
-    --- - OnRemove(number entIndex)
-    --- @param hooktype any
+    --- @param hooktype KNWEntityHook
     --- @param id any
     --- @param func function?
     function KNWEntity:AddHook(hooktype,id,func)

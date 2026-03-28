@@ -50,14 +50,14 @@ function KFuncThrottler:Execute(cost,func,...)
     local getLimiter = getWeakReference(limiter)
 
     local hookName = priv.HookName
-    limiter:SetHook(hookName,function(currVal)
+    limiter:SetHook(hookName,"Think",function(currVal)
         local queued = queue:GetLeft()
 
         local limiterReference = getLimiter()
         if not limiterReference then return end
 
         if not queued then
-            limiterReference:SetHook(hookName,nil)
+            limiterReference:SetHook(hookName,"Think",nil)
             return
         end
 
@@ -75,5 +75,5 @@ end
 function KFuncThrottler:Clear()
     local priv = getPriv(self)
     priv.Queue = KQueue
-    priv.Limiter:SetHook(priv.HookName,nil)
+    priv.Limiter:SetHook(priv.HookName,"Think",nil)
 end
