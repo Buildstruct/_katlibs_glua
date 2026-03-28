@@ -14,7 +14,7 @@ local baseClassArgs,currObj
 ---SHARED<br>
 ---OOP implementation<br>
 ---@class KClass
----@overload fun(publicConstructor?: (fun(...): table?), params?: table) : (class: table, getPriv: any)
+---@overload fun(publicConstructor?: (fun(...): table?), params?: table) : (class: table, getPriv: (fun(any: any): any))
 KClass = setmetatable({},{
 	__call = function(_,publicConstructor,params)
 		if publicConstructor then KError.ValidateArg("constructor",KVarConditions.Function(publicConstructor)) end

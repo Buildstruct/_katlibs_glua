@@ -158,7 +158,6 @@ end
 ---@param valueAssertion [any, boolean, string]
 ---@return any key The key passed, if valid.
 ---@return any value The value passed, if valid.
----@deprecated
 function KError.ValidateKVArg(name,keyAssertion,valueAssertion)
 	if keyAssertion[ASSERTION_RESULT] and valueAssertion[ASSERTION_RESULT] then
 		return keyAssertion[ASSERTION_VALUE],valueAssertion[ASSERTION_VALUE]
