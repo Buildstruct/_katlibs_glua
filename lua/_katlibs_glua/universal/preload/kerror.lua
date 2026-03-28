@@ -17,9 +17,9 @@ local s_format = string.format
 local error = error
 
 local kc_Is
---hook.Add("KatLibsLoaded","KError",function()
+hook.Add("KatLibsLoaded","KError",function()
 	kc_Is = KClass.Is
---end)
+end)
 
 ---SHARED,STATIC<br>
 ---Conditions for parameter checking.
