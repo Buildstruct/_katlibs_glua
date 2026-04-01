@@ -86,7 +86,7 @@ do --entity definition
 
 		---function is only on dev branch, does not exist in documentation yet
 		---@diagnostic disable-next-line: redundant-parameter
-		im_DrawSkinned(currMesh,currBoneTable or empty)
+		im_DrawSkinned(currMesh,currBoneTable or empty,true)
 
 		---documentation is straight up wrong
 		---@diagnostic disable-next-line: missing-parameter

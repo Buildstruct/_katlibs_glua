@@ -227,7 +227,7 @@ do --convert KModelData into MeshVertexes
 			local binormal = meshVertex.binormal and roundVector(normalMatrix * meshVertex.binormal)
 			local tangent = meshVertex.tangent and roundVector(normalMatrix * meshVertex.tangent)
 			local pos = roundVector(modelMatrix * meshVertex.pos)
-			local weight = boneIndex and {{bone = boneIndex, weight = 1}}
+			local weights = boneIndex and {{bone = boneIndex, weight = 1}}
 			t_insert(triangles,{
 				pos = pos,
 				normal = normal,
@@ -236,7 +236,7 @@ do --convert KModelData into MeshVertexes
 				userdata = meshVertex.userdata,
 				u = meshVertex.u,
 				v = meshVertex.v,
-				weight = weight,
+				weights = weights,
 			})
 		end
 	end
@@ -290,7 +290,6 @@ KScene,getPriv = KClass(function(modelDataTable)
 		RenderOpaque = {},
 		RenderBoth = {},
 		RenderTransluscent = {},
-		BoneIndexes = {},
 	}
 end)
 
@@ -307,12 +306,15 @@ KScene.CreateWithBones = getFactory(function(kModelDataBoneGroups)
 	local kModelDataTable = {}
 	local modelBoneLookup = {}
 	local boneNameIndexLookup = {}
+	local boneMatrices = {}
 
+	local emptyMatrix = Matrix()
 	local boneCount = 0
 	for boneName,group in pairs(kModelDataBoneGroups) do
 		KError.ValidateKVArg("kModelDataBoneGroups",KVarConditions.String(boneName),KVarConditions.Table(group))
 		boneCount = boneCount + 1
 		boneNameIndexLookup[boneName] = boneCount
+		boneMatrices[boneCount] = emptyMatrix
 
 		for k,modelData in pairs(group) do
 			KError.ValidateKVArg(
@@ -333,7 +335,7 @@ KScene.CreateWithBones = getFactory(function(kModelDataBoneGroups)
 		RenderBoth = {},
 		RenderTransluscent = {},
 		BoneIndexes = boneNameIndexLookup,
-		BoneMatrices = {},
+		BoneMatrices = boneMatrices,
 	}
 end)
 
@@ -349,7 +351,6 @@ function KScene:Destroy()
 	priv.RenderOpaque = {}
 	priv.RenderBoth = {}
 	priv.RenderTransluscent = {}
-	priv.BoneMatrices = {}
 end
 local ksc_Destroy = KScene.Destroy
 
@@ -386,7 +387,10 @@ function KScene:Compile()
 			renderBoth
 
 		for _,triangleData in pairs(splitSequentialTableByCount(visualPropertyGroup.TriangleData,MAX_TRIS_PER_MESH)) do
-			local newMesh = Mesh()
+			---parameter is only on dev branch, does not exist in documentation yet
+			---@diagnostic disable-next-line: redundant-parameter
+			local newMesh = Mesh(nil,2)
+
 			mesh_Begin(newMesh,MATERIAL_TRIANGLES,#triangleData)
 			for i = 1, #triangleData do
 				local meshVertex = triangleData[i]
@@ -406,8 +410,10 @@ function KScene:Compile()
 
 				local weights = meshVertex.weights
 				if weights then
-					mesh_BoneData(0,weights.bone,weights.weight)
-					mesh_BoneData(1,weights.bone,0)
+					for _,weight in pairs(weights) do
+						mesh_BoneData(0,weight.bone,weight.weight)
+						mesh_BoneData(1,weight.bone,0)
+					end
 				end
 
 				mesh_Color(255,255,255,255)
@@ -425,10 +431,12 @@ end
 ---@param flags STUDIO?
 function KScene:Draw(flags)
 	if flags == STUDIO_DRAWTRANSLUCENTSUBMODELS then return end
+	local priv = getPriv(self)
+	local renderOpaque = priv.RenderOpaque
+	local boneMatrices = priv.BoneMatrices
 
-	local renderOpaque = getPriv(self).RenderOpaque
 	for i = 1,#renderOpaque do
-		renderOpaque[i]()
+		renderOpaque[i](boneMatrices)
 	end
 end
 local ksc_Draw = KScene.Draw
@@ -439,16 +447,26 @@ function KScene:DrawTranslucent(flags)
 	if flags == STUDIO_RENDER then return end
 
 	local priv = getPriv(self)
+	local boneMatrices = priv.BoneMatrices
 
 	local renderBoth = priv.RenderBoth
 	for i = 1,#renderBoth do
-		renderBoth[i]()
+		renderBoth[i](boneMatrices)
 	end
 
 	local renderTransluscent = priv.RenderTransluscent
 	for i = 1,#renderTransluscent do
-		renderTransluscent[i]()
+		renderTransluscent[i](boneMatrices)
 	end
+end
+
+function KScene:SetBoneMatrix(boneName,matrix)
+	local priv = getPriv(self)
+	local boneIndexes = priv.BoneIndexes
+	local index = boneIndexes[boneName]
+	if not index then return end
+	chat.AddText(tostring(index))
+	priv.BoneMatrices[index] = matrix
 end
 
 function KScene:IsValid() return #getPriv(self).Meshes > 0 end
