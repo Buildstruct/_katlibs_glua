@@ -274,7 +274,7 @@ do --convert KModelData into MeshVertexes
 			appendTriangleData(visualPropertyGroup.TriangleData,currModelData,boneIndex)
 		end
 
-		return meshData
+		return table.ClearKeys(meshData)
 	end
 end
 
@@ -286,6 +286,8 @@ local getPriv
 KScene,getPriv = KClass(function(modelDataTable)
 	return {
 		MeshData = convertModelDataToMeshVertexes(modelDataTable,{}),
+		BoneIndexes = {},
+
 		Meshes = {},
 		RenderOpaque = {},
 		RenderBoth = {},
@@ -301,7 +303,7 @@ end)
 
 ---SHARED<br>
 ---Creates a new KScene with bones from named groups of KModelData.
----@type fun(kModelDataGroups: {[string] : KModelData[]} ): boolean
+---@type fun(kModelDataGroups: {[string] : KModelData[]} ): KScene
 KScene.CreateWithBones = getFactory(function(kModelDataBoneGroups)
 	local kModelDataTable = {}
 	local modelBoneLookup = {}
@@ -329,12 +331,15 @@ KScene.CreateWithBones = getFactory(function(kModelDataBoneGroups)
 	assert(boneCount < MESH_MAX_BONES,"Too many bones! Max: " .. MESH_MAX_BONES)
 
 	return {
+		--serialized
 		MeshData = convertModelDataToMeshVertexes(kModelDataTable,modelBoneLookup),
+		BoneIndexes = boneNameIndexLookup,
+
+		--runtime
 		Meshes = {},
 		RenderOpaque = {},
 		RenderBoth = {},
 		RenderTransluscent = {},
-		BoneIndexes = boneNameIndexLookup,
 		BoneMatrices = boneMatrices,
 	}
 end)
@@ -372,7 +377,10 @@ function KScene:Compile()
 	local renderBoth = priv.RenderBoth
 	local renderTransluscent = priv.RenderTransluscent
 
-	for _,visualPropertyGroup in pairs(priv.MeshData) do
+	local meshData = priv.MeshData
+	for i = 1, #meshData do
+		local visualPropertyGroup = meshData[i]
+
 		local material = Material(visualPropertyGroup.Material)
 		local color = visualPropertyGroup.Color
 		local colorRed = color.r / 255
@@ -392,8 +400,8 @@ function KScene:Compile()
 			local newMesh = Mesh(nil,2)
 
 			mesh_Begin(newMesh,MATERIAL_TRIANGLES,#triangleData)
-			for i = 1, #triangleData do
-				local meshVertex = triangleData[i]
+			for j = 1, #triangleData do
+				local meshVertex = triangleData[j]
 
 				mesh_Position(meshVertex.pos)
 				mesh_Normal(meshVertex.normal)
@@ -472,18 +480,21 @@ end
 function KScene:IsValid() return #getPriv(self).Meshes > 0 end
 
 local visualPropertyGroupSanitizer = KTableSanitizer({
-	Color = {
-		r = "number",
-		g = "number",
-		b = "number",
-		a = "number",
-	},
-	Material = "string",
-	RenderGroup = "number",
-	RenderMode = "number",
-	TriangleData = "TriangleData[]",
-	BoneIndexes = "number[]",
+	MeshData = "VisualPropertyGroup[]",
+	BoneIndexes = "table",
 },{
+	VisualPropertyGroup = {
+		Color = {
+			r = "number",
+			g = "number",
+			b = "number",
+			a = "number",
+		},
+		Material = "string",
+		RenderGroup = "number",
+		RenderMode = "number",
+		TriangleData = "TriangleData[]",
+	},
 	TriangleData = {
 		color = {
 			r = "number",
@@ -491,10 +502,10 @@ local visualPropertyGroupSanitizer = KTableSanitizer({
 			b = "number",
 			a = "number",
 		},
-		normal = "Vector",
-		tangent = "Vector",
-		binomial = "Vector",
 		pos = "Vector",
+		normal = "Vector",
+		tangent = "Vector?",
+		binormal = "Vector?",
 		u = "number?",
 		v = "number?",
 		userdata = "UserData[]?",
@@ -519,7 +530,10 @@ function KScene:GetSerializable()
 	local priv = getPriv(self)
 	---@cast priv table
 
-	return {MeshData = table.Copy(priv.MeshData)}
+	return {
+		MeshData = table.Copy(priv.MeshData),
+		BoneIndexes = table.Copy(priv.BoneIndexes),
+	}
 end
 
 ---SHARED,STATIC<br>
@@ -528,16 +542,10 @@ end
 ---@param serializable table
 ---@return KScene?
 function KScene.FromSerializable(serializable)
-	local sanitized = {}
-
-	for key,visualPropertyGroup in pairs(serializable) do
-		if not isstring(key) then return end
-		local sanitizedGroup = visualPropertyGroupSanitizer(visualPropertyGroup)
-		if not sanitizedGroup then return end
-		sanitized[key] = sanitizedGroup
-	end
-
-	return jsonConstructor(sanitized)
+	--TODO: Fix when this starts taking in user-provided data.
+	--local sanitized,err = visualPropertyGroupSanitizer(serializable)
+	--if not sanitized then print(err) return end
+	return jsonConstructor(serializable)
 end
 
 hook.Run("KatLibsLoaded")

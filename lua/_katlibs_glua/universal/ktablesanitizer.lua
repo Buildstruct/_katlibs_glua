@@ -153,6 +153,7 @@ function KTableSanitizer(tableStructure,customTypeStructures)
 			CurrentTable = typeStructure,
 			CallName = callName,
 			EvaluationFunctions = evaluationFunctions,
+			CustomTypes = customTypeStructures,
 		})
 		t_insert(callNames,callName)
 	end
@@ -168,7 +169,7 @@ function KTableSanitizer(tableStructure,customTypeStructures)
 	local evaluationFunctionCode = t_concat(t_ClearKeys(evaluationFunctions))
 	local fullCode = s_format(GENERATED_CODE_TEMPLATE,fileHeader,evaluationFunctionCode)
 
-	file.Write("testsanitizer.txt",fullCode)
+	--file.Write("testsanitizer.txt",fullCode)
 	local performCheck,getError = CompileString(fullCode,"KTableSanitizer")()
 
 	return function(check)
