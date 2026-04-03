@@ -33,7 +33,6 @@ local m_ceil = math.ceil
 local util_IntersectRayWithPlane = util.IntersectRayWithPlane
 local t_insert = table.insert
 local m_Round = math.Round
-local isstring = isstring
 local util_SHA256 = util.SHA256
 local r_SetBlend = render.SetBlend
 local r_SetColorModulation = render.SetColorModulation
@@ -479,6 +478,7 @@ end
 
 function KScene:IsValid() return #getPriv(self).Meshes > 0 end
 
+--[[
 local visualPropertyGroupSanitizer = KTableSanitizer({
 	MeshData = "VisualPropertyGroup[]",
 	BoneIndexes = "table",
@@ -522,6 +522,7 @@ local visualPropertyGroupSanitizer = KTableSanitizer({
 		weight = "number",
 	}
 })
+]]
 
 ---SHARED<br>
 ---Gets a JSON-serializable table representing this object that can be used to recreate this object later.
@@ -533,6 +534,11 @@ function KScene:GetSerializable()
 	return {
 		MeshData = table.Copy(priv.MeshData),
 		BoneIndexes = table.Copy(priv.BoneIndexes),
+
+		Meshes = {},
+		RenderOpaque = {},
+		RenderBoth = {},
+		RenderTransluscent = {},
 	}
 end
 
