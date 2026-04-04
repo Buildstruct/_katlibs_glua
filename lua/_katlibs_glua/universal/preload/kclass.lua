@@ -1,102 +1,146 @@
 local unpack = unpack
 local setmetatable = setmetatable
-local rawset = rawset
+local getmetatable = getmetatable
+local newproxy = newproxy
+
 local classInternalsLookup = setmetatable({},{__mode = "k"})
 
 ---@class KClassParams
----@field InheritedClass KClass
----@field Abstract boolean
+---@field InheritedClass KClass? A class that this new class will derive from.
+---@field Destructor fun(object?: table)? A destructor for objects of this class to be called when they are cleaned by the GC.
+---@field Abstract boolean? Whether this class is abstract.
 
----@class _KClass_Priv
+---@class KClassPriv A table that holds the private members of a class or object.
 ---@field GetFactory any A method that returns a new constructor for this class.
 
+---@alias KClassPrivGetter (fun(any: any): any) A function that is used to access the private table of a class or object.
+---@alias KClassConstructor (fun(...): table?) A constructor for a KClass.
+
 local baseClassArgs,currObj
+local function implementInheritance(classInternals)
+	local class = classInternals.Class
+	local classMetatable = classInternals.Metatable
+	local classPrivDirectory = classInternals.PrivDirectory
+	local inheritedClass = classInternals.InheritedClass
+
+	if inheritedClass then
+		local inheritedInternals = classInternalsLookup[inheritedClass]
+		classMetatable.__index = inheritedClass
+
+		local inheritedPublicConstructor = inheritedInternals.PublicConstructor
+		if not inheritedPublicConstructor then error("Cannot inherit from a KClass without a public constructor!") end
+
+		local basePopulateObjectPriv = inheritedInternals.PopulateObjectPriv
+		function classInternals.PopulateObjectPriv(object,constructor,...)
+			baseClassArgs = nil
+			classPrivDirectory[object] = constructor(...) or {}
+			if not baseClassArgs then error("Failed to call KClass.CallBaseConstructor in inherited class!") end
+			basePopulateObjectPriv(object,inheritedPublicConstructor,unpack(baseClassArgs))
+		end
+
+		classInternals.ParentClasses = setmetatable({
+			[class] = true,
+		},{
+			__mode = "k",
+			__index = inheritedInternals.ParentClasses
+		})
+	else
+		function classInternals.PopulateObjectPriv(object,constructor,...)
+			classPrivDirectory[object] = constructor(...) or {}
+		end
+
+		classInternals.ParentClasses = setmetatable({
+			[class] = true,
+		},{__mode = "k"})
+	end
+end
+
+local function addDestructorToTable(tab,destructor)
+	local userData = newproxy(true)
+	getmetatable(tab).destructorUserData = userData
+	getmetatable(userData).__gc = function()
+		print("destructor call on ",tab)
+		destructor(tab)
+	end
+end
+
+local function createObjectFactory(classInternals,constructor)
+	local populateObjectPriv = classInternals.PopulateObjectPriv
+	local destructor = classInternals.Destructor
+
+	if destructor then
+		return function(...)
+			local object = setmetatable({},{__index = classInternals.Class})
+			addDestructorToTable(object,destructor)
+			currObj = object
+			populateObjectPriv(object,constructor,...)
+			currObj = nil
+			return object
+		end
+	end
+
+	return function(...)
+		local object = setmetatable({},{__index = classInternals.Class})
+		currObj = object
+		populateObjectPriv(object,constructor,...)
+		currObj = nil
+		return object
+	end
+end
+
+local function implementPublicConstructor(classInternals)
+	local classMetatable = classInternals.Metatable
+	local publicConstructor = classInternals.PublicConstructor
+	local abstract = classInternals.Abstract
+
+	if not publicConstructor then return end
+
+	if abstract then
+		classMetatable.__call = function(_,...)
+			error("This KClass is abstract and is not meant to be instantiated at this level!")
+		end
+		return
+	end
+
+	local publicFactory = createObjectFactory(classInternals,publicConstructor)
+	classMetatable.__call = function(_,...)
+		return publicFactory(...)
+	end
+end
+
 ---SHARED<br>
 ---OOP implementation<br>
 ---@class KClass
----@overload fun(publicConstructor?: (fun(...): table?), params?: table) : (class: table, getPriv: (fun(any: any): any))
+---@overload fun(publicConstructor?: KClassConstructor, params?: KClassParams) : (class: table, getPriv: KClassPrivGetter)
 KClass = setmetatable({},{
 	__call = function(_,publicConstructor,params)
-		if publicConstructor then KError.ValidateArg("constructor",KVarConditions.Function(publicConstructor)) end
-
 		params = params or {}
-
-		local inheritedClass = params.InheritedClass
-
-		local abstract = (params.Abstract == true) and true or false
+		KError.ValidateNullableArg("constructor",KVarConditions.Function(publicConstructor))
+		KError.ValidateNullableArg("params.Destructor",KVarConditions.Function(params.Destructor))
+		KError.ValidateNullableArg("params.Destructor",KVarConditions.Bool(params.Abstract))
+		assert(params.InheritedClass == nil or classInternalsLookup[params.InheritedClass] ~= nil,"params.InheritedClass is not a KClass!")
 
 		local classMetatable = {}
 		local class = setmetatable({},classMetatable)
-
-		local classInternals = {}
+		local classPrivDirectory = setmetatable({},{__mode = "k"})
+		local classInternals = {
+			Class = class,
+			Metatable = classMetatable,
+			PrivDirectory = classPrivDirectory,
+			PublicConstructor = publicConstructor,
+			InheritedClass = params.InheritedClass,
+			Destructor = params.Destructor,
+			Abstract = params.Abstract,
+			--PopulateObjectPriv
+		}
 		classInternalsLookup[class] = classInternals
 
-		local classPrivDirectory = setmetatable({},{__mode = "k"})
+		implementInheritance(classInternals)
+		implementPublicConstructor(classInternals)
 
-		local populateObjectPriv
-		if inheritedClass then
-			assert(classInternalsLookup[inheritedClass] ~= nil,"params.InheritedClass is not a KClass!")
-
-			local inheritedInternals = classInternalsLookup[inheritedClass]
-			classMetatable.__index = inheritedClass
-
-			local inheritedPublicConstructor = inheritedInternals.PublicConstructor
-			if not inheritedPublicConstructor then error("Cannot inherit from a KClass without a public constructor!") end
-
-			local basePopulateObjectPriv = inheritedInternals.PopulateObjectPriv
-			function populateObjectPriv(object,constructor,...)
-				baseClassArgs = nil
-				classPrivDirectory[object] = constructor(...) or {}
-				if not baseClassArgs then error("Failed to call KClass.CallBaseConstructor in inherited class!") end
-				basePopulateObjectPriv(object,inheritedPublicConstructor,unpack(baseClassArgs))
-			end
-
-			classInternals.ParentClasses = setmetatable({
-				[class] = true,
-			},{
-				__mode = "k",
-				__index = inheritedInternals.ParentClasses
-			})
-		else
-			function populateObjectPriv(object,constructor,...)
-				classPrivDirectory[object] = constructor(...) or {}
-			end
-
-			classInternals.ParentClasses = setmetatable({
-				[class] = true,
-			},{__mode = "k"})
-		end
-
-		classInternals.PopulateObjectPriv = populateObjectPriv
-
-		local function getObjectFactory(constructor)
-			return function(...)
-				local object = setmetatable({},{__index = class})
-				currObj = object
-				populateObjectPriv(object,constructor,...)
-				currObj = nil
-				return object
-			end
-		end
-
-		if publicConstructor then
-			classInternals.PublicConstructor = publicConstructor
-
-			if abstract then
-				classMetatable.__call = function(_,...)
-					error("This KClass is abstract and is not meant to be instantiated at this level!")
-				end
-			else
-				local publicFactory = getObjectFactory(publicConstructor)
-				classMetatable.__call = function(_,...)
-					return publicFactory(...)
-				end
-			end
-		end
-
-		rawset(classPrivDirectory,class,{
-			GetFactory = getObjectFactory,
-		})
+		classPrivDirectory[class] = {
+			GetFactory = function(constructor) return createObjectFactory(classInternals,constructor) end,
+		}
 
 		local function getPriv(obj)
 			return classPrivDirectory[obj]
@@ -106,21 +150,21 @@ KClass = setmetatable({},{
 	end
 })
 
----SHARED<br>
+---SHARED, STATIC<br>
 ---Calls the baseclass constructor for inheritance.<br>
 ---<b><u>Can only be called inside constructors!<u/><b/>
 function KClass.CallBaseConstructor(...)
 	baseClassArgs = {...}
 end
 
----SHARED<br>
+---SHARED, STATIC<br>
 ---Get the current public object being instantiated.<br>
 ---<b><u>Can only be called inside constructors!<u/><b/>
 function KClass.GetSelf()
 	return currObj
 end
 
----SHARED<br>
+---SHARED, STATIC<br>
 ---Check if object is a KClass object instance.
 ---@param object any
 ---@param comparisonClass? any If supplied, checks if the object is or is derived from this class.
