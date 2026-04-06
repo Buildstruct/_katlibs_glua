@@ -5,12 +5,12 @@ local newproxy = newproxy
 
 local classInternalsLookup = setmetatable({},{__mode = "k"})
 
----@class KClassParams
----@field InheritedClass KClass? A class that this new class will derive from.
+---@class _KClassParams
+---@field InheritedClass any? A class that this new class will derive from.
 ---@field Destructor fun(object?: table)? A destructor for objects of this class to be called when they are cleaned by the GC.
 ---@field Abstract boolean? Whether this class is abstract.
 
----@class KClassPriv A table that holds the private members of a class or object.
+---@class _KClassPriv A table that holds the private members of a class or object.
 ---@field GetFactory any A method that returns a new constructor for this class.
 
 ---@alias KClassPrivGetter (fun(any: any): any) A function that is used to access the private table of a class or object.
@@ -111,7 +111,7 @@ end
 ---SHARED<br>
 ---OOP implementation<br>
 ---@class KClass
----@overload fun(publicConstructor?: KClassConstructor, params?: KClassParams) : (class: table, getPriv: KClassPrivGetter)
+---@overload fun(publicConstructor?: KClassConstructor, params?: _KClassParams) : (class: table, getPriv: KClassPrivGetter)
 KClass = setmetatable({},{
 	__call = function(_,publicConstructor,params)
 		params = params or {}
