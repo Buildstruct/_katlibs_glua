@@ -1,7 +1,7 @@
 if KClientInit then return end
 
----SHARED, STATIC<br>
----Quick and convenient sync the client with the server on choice data.<br>
+---SHARED, STATIC<br/>
+---Quick and convenient sync the client with the server on choice data.<br/>
 ---
 ---Hooks:
 --- - KOnClientInit(Player ply)
@@ -41,8 +41,8 @@ if SERVER then
 		end
 	end)
 
-	---SERVER<br>
-	---Register a netcode callback to send to the client when it initializes.<br>
+	---SERVER<br/>
+	---Register a netcode callback to send to the client when it initializes.<br/>
 	---Do not start or send net, it is automatically handled.
 	---@param key string
 	---@param func function
@@ -58,8 +58,8 @@ elseif CLIENT then
 		n_SendToServer()
 	end)
 
-	---CLIENT<br>
-	---Register a netcode callback to receive from the server when it initializes.<br>
+	---CLIENT<br/>
+	---Register a netcode callback to receive from the server when it initializes.<br/>
 	---Do not start or send net, it is automatically handled.
 	---@param key string
 	---@param func function

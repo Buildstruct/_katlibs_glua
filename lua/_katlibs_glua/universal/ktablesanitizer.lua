@@ -138,8 +138,8 @@ function generateTableEvaluationCode(recursionData)
 	evaluationFunctions[recursionData.CallName] = s_format(EVALUATION_FUNCTION_TEMPLATE,recursionData.CallName,t_concat(currentEvaluation))
 end
 
----SHARED,STATIC<br>
----Allows creation of sanitizer objects for tables. Useful for user input cases.<br>
+---SHARED,STATIC<br/>
+---Allows creation of sanitizer objects for tables. Useful for user input cases.<br/>
 ---**WARNING: Calls CompileString internally during initialization.**
 ---@return KTableSanitizer
 ---@class KTableSanitizer : function

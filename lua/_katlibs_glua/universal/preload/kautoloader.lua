@@ -1,6 +1,6 @@
 if KAutoLoader then return end
 
----SHARED,STATIC<br>
+---SHARED,STATIC<br/>
 ---Loader for directories of lua files.
 KAutoLoader = {}
 
@@ -35,7 +35,7 @@ local function addFile(file,directory,realm)
 	action(directory .. file)
 end
 
----Include all lua files in a directory<br>
+---Include all lua files in a directory<br/>
 ---
 ---params:
 --- - string? Realm [sv, cl, sh]

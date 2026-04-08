@@ -1,6 +1,6 @@
 if KHalo then return end
 
----CLIENT, STATIC<br>
+---CLIENT, STATIC<br/>
 ---HaloEx library refactor.
 KHalo = {}
 
@@ -67,8 +67,8 @@ end)
 
 local halos = {}
 
----CLIENT<br>
----Register a KHalo to the render stack.<br>
+---CLIENT<br/>
+---Register a KHalo to the render stack.<br/>
 ---
 ---params:
 --- - sequential Entity[] Ents
@@ -129,13 +129,13 @@ function KHalo.Add(key,params)
 	hook.Add("PostDrawEffects","RenderKHalos",drawHaloHook)
 end
 
----CLIENT<br>
+---CLIENT<br/>
 ---Unregister a KHalo from the render stack.
 function KHalo.Remove(key)
 	halos[key] = nil
 end
 
----CLIENT<br>
+---CLIENT<br/>
 ---Add a entity to a registered KHalo.
 ---@param ent Entity
 function KHalo.AddEnt(key,ent)
@@ -147,7 +147,7 @@ function KHalo.AddEnt(key,ent)
 	tab.Ents[ent] = true
 end
 
----CLIENT<br>
+---CLIENT<br/>
 ---Remove a entity from a registered KHalo.
 ---@param ent Entity
 function KHalo.RemoveEnt(key,ent)

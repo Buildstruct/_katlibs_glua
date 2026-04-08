@@ -3,7 +3,7 @@ local ASSERTION_VALUE = 1
 local ASSERTION_RESULT = 2
 local ASSERTION_EXPECTATION = 3
 
----SHARED,STATIC<br>
+---SHARED,STATIC<br/>
 ---Standardized errors
 KError = {}
 
@@ -21,7 +21,7 @@ hook.Add("KatLibsLoaded","KError",function()
 	kc_Is = KClass.Is
 end)
 
----SHARED,STATIC<br>
+---SHARED,STATIC<br/>
 ---Conditions for parameter checking.
 KVarConditions = {
 	---@return [any, boolean, string]
@@ -126,7 +126,7 @@ KVarConditions = {
 	end,
 }
 
----SHARED,STATIC<br>
+---SHARED,STATIC<br/>
 ---Validate function argument.
 ---@generic T
 ---@param name string
@@ -138,7 +138,7 @@ function KError.ValidateArg(name,assertion)
 	error(s_format("arg [%s]: expected [%s].",name,assertion[ASSERTION_EXPECTATION]))
 end
 
----SHARED,STATIC<br>
+---SHARED,STATIC<br/>
 ---Validate nullable function argument.
 ---@generic T
 ---@param name string
@@ -151,7 +151,7 @@ function KError.ValidateNullableArg(name,assertion)
 	error(s_format("arg [%s]: expected [%s].",name,assertion[ASSERTION_EXPECTATION]))
 end
 
----SHARED,STATIC<br>
+---SHARED,STATIC<br/>
 ---Validate function table argument values.
 ---@param name string
 ---@param keyAssertion [any, boolean, string]

@@ -16,7 +16,7 @@ local NETSTRING_ENTREMOVED = "KEntityNetworking"
 if SERVER then
     util.AddNetworkString(NETSTRING_ENTREMOVED)
 
-    ---SERVER,STATIC<br>
+    ---SERVER,STATIC<br/>
     ---Writes an entity to the net message to be read as a KNWEntity clientside.
     ---@param ent Entity
     function net.WriteKNWEntity(ent)
@@ -41,7 +41,7 @@ elseif CLIENT then
         end
     end
 
-    ---CLIENT<br>
+    ---CLIENT<br/>
     ---Gets an entity's KNWEntity.
     ---@return KNWEntity?
     function ent_meta:GetKNWEntity()
@@ -49,7 +49,7 @@ elseif CLIENT then
     end
 
     local getPriv
-    ---CLIENT,STATIC<br>
+    ---CLIENT,STATIC<br/>
     ---A clientside container for data about an entity that does not clear on clientside PVS deletion
     ---@class KNWEntity
     KNWEntity,getPriv = KClass()
@@ -67,7 +67,7 @@ elseif CLIENT then
         }
     end)
 
-    ---CLIENT<br>
+    ---CLIENT<br/>
     ---Reads a KNWEntity from a net message.
     ---@return KNWEntity
     function net.ReadKNWEntity()
@@ -98,7 +98,7 @@ elseif CLIENT then
         return knwEnt
     end
 
-    ---CLIENT<br>
+    ---CLIENT<br/>
     ---Gets an KNWEntity's by its entity index, if it exists.
     ---@param eid KNWEntity?
     ---@return KNWEntity?
@@ -106,28 +106,28 @@ elseif CLIENT then
         return activeEnts[eid]
     end
 
-    ---CLIENT<br>
+    ---CLIENT<br/>
     ---Gets an KNWEntity's Entity.
     ---@return Entity
     function KNWEntity:GetEntity()
         return Entity(getPriv(self).EntIndex)
     end
 
-    ---CLIENT<br>
+    ---CLIENT<br/>
     ---Gets an KNWEntity's entity index.
     ---@return number
     function KNWEntity:EntIndex()
         return getPriv(self).EntIndex
     end
 
-    ---CLIENT<br>
+    ---CLIENT<br/>
     ---Returns the time in seconds since this KNWEntity was registered.
     ---@return number
     function KNWEntity:GetNWLifetime()
         return SysTime() - getPriv(self).NWTime
     end
 
-    ---CLIENT<br>
+    ---CLIENT<br/>
     ---Returns if this KNWEntity has only been registered once.
     ---@return boolean
     function KNWEntity:IsFirstTimeNetworked()
@@ -138,7 +138,7 @@ elseif CLIENT then
     ---| '"OnInitialize"' #fun(entIndex: number, ent: Entity) - Called when the entity initializes clientside.
     ---| '"OnRemove"' #fun(entIndex: number) - Called when the entity is removed serverside.
 
-    ---CLIENT<br>
+    ---CLIENT<br/>
     ---Register a hook with this KNWEntity.
     --- @param hooktype KNWEntityHook
     --- @param id any
@@ -151,7 +151,7 @@ elseif CLIENT then
         hookTab[id] = func
     end
 
-    ---CLIENT<br>
+    ---CLIENT<br/>
     ---Calls a function if the KNWEntity's Entity is currently valid.
     --- @param func function
     function KNWEntity:CallIfValid(func,...)

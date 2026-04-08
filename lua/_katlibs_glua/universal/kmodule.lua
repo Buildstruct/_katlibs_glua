@@ -73,7 +73,7 @@ local netstringItr = -1
 local netReceivers = {}
 
 local getPriv
----SHARED<br>
+---SHARED<br/>
 ---A pcall wrapper for code that allows for modular code that can be stopped at any time.
 ---@class KModule
 ---@overload fun(moduleName: string, entryPoint: fun(...), env : table?): KModule
@@ -335,11 +335,11 @@ net.Receive(NETSTRING_KMODULE,function(len,ply)
     netCallback(len,ply)
 end)
 
----SHARED,STATIC<br>
+---SHARED,STATIC<br/>
 ---Methods to interact with the current KModule context, if in one.
 CurrKModule = {}
 
----SHARED,STATIC<br>
+---SHARED,STATIC<br/>
 ---Adds a callback to be called when the current module is disposed.
 ---@param key any
 ---@param callback function
@@ -347,7 +347,7 @@ function CurrKModule.AddDisposeCB(key,callback)
     Error("Not currently in a module context!")
 end
 
----SHARED,STATIC<br>
+---SHARED,STATIC<br/>
 ---Disposes the current KModule
 function CurrKModule.Dispose()
     Error("Not currently in a module context!")

@@ -14,9 +14,9 @@ local function getBitsInNum(n)
     return ct
 end
 
----SHARED, STATIC<br>
----Trades network efficiency for less NWString usage.<br>
----Probably good for organizing net messages in use cases where net efficiency isn't a priority.<br>
+---SHARED, STATIC<br/>
+---Trades network efficiency for less NWString usage.<br/>
+---Probably good for organizing net messages in use cases where net efficiency isn't a priority.<br/>
 ---
 ---the only moral action is the minimization of NW slots - sun tzu
 ---@param netstring string
@@ -35,7 +35,7 @@ function KEnumNetMsg(netstring,enums)
     local enum_bitcount = getBitsInNum(highestEnum)
     local receivers = {}
 
-    ---SHARED<br>
+    ---SHARED<br/>
     ---Starts a netmessage with the a netmessage enum.
     ---@param messageEnum number
     local function netMsgStart(messageEnum)
@@ -43,7 +43,7 @@ function KEnumNetMsg(netstring,enums)
         n_WriteUInt(messageEnum,enum_bitcount)
     end
 
-    ---SHARED<br>
+    ---SHARED<br/>
     ---Receives a netmessage with the a netmessage enum.
     ---@param messageEnum number
     ---@param func function

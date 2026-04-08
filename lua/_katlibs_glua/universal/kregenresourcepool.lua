@@ -6,7 +6,7 @@ local Tick_Regen
 local regenerating = setmetatable({},{__mode = "k"})
 
 local getPriv
----SHARED<br>
+---SHARED<br/>
 ---A number value that regenerates over time and can be used.
 ---@class KRegenResourcePool
 ---@overload fun(max: number, regenRatePerSecond: number, allowDebt?: boolean): KRegenResourcePool
@@ -33,7 +33,7 @@ local function callHook(hooks,val)
     end
 end
 
----SHARED<br>
+---SHARED<br/>
 ---Uses the resource pool with the specified cost.
 ---@param cost number
 ---@return boolean success
@@ -57,14 +57,14 @@ function KRegenResourcePool:Use(cost)
     return true
 end
 
----SHARED<br>
+---SHARED<br/>
 ---Gets the maximum value of this resource pool.
 ---@return number max
 function KRegenResourcePool:GetMax()
     return getPriv(self).Max
 end
 
----SHARED<br>
+---SHARED<br/>
 ---Gets the current value of this resource pool.
 ---@return number value
 function KRegenResourcePool:Count()
@@ -76,7 +76,7 @@ end
 ---| '"OnFull"' #fun(value: number) - Called once when the pool is filled.
 ---| '"OnEmpty"' #fun(value: number) - Called once when the pool is depleted.
 
----CLIENT<br>
+---CLIENT<br/>
 ---Register a hook with this KNWEntity.<br/>
 ---Set func to nil to remove a hook.
 --- @param hooktype KRegenResourcePoolHook

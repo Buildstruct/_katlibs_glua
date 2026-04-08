@@ -108,8 +108,8 @@ local function implementPublicConstructor(classInternals)
 	end
 end
 
----SHARED<br>
----OOP implementation<br>
+---SHARED<br/>
+---OOP implementation<br/>
 ---@class KClass
 ---@overload fun(publicConstructor?: KClassConstructor, params?: _KClassParams) : (class: table, getPriv: KClassPrivGetter)
 KClass = setmetatable({},{
@@ -150,21 +150,21 @@ KClass = setmetatable({},{
 	end
 })
 
----SHARED, STATIC<br>
----Calls the baseclass constructor for inheritance.<br>
+---SHARED, STATIC<br/>
+---Calls the baseclass constructor for inheritance.<br/>
 ---<b><u>Can only be called inside constructors!<u/><b/>
 function KClass.CallBaseConstructor(...)
 	baseClassArgs = {...}
 end
 
----SHARED, STATIC<br>
----Get the current public object being instantiated.<br>
+---SHARED, STATIC<br/>
+---Get the current public object being instantiated.<br/>
 ---<b><u>Can only be called inside constructors!<u/><b/>
 function KClass.GetSelf()
 	return currObj
 end
 
----SHARED, STATIC<br>
+---SHARED, STATIC<br/>
 ---Check if object is a KClass object instance.
 ---@param object any
 ---@param comparisonClass? any If supplied, checks if the object is or is derived from this class.
