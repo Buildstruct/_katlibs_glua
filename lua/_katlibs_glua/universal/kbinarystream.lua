@@ -5,8 +5,6 @@ local NULL_TERMINATOR = "\x00"
 local INT8_MAX = 127
 local INT16_MAX = 32767
 local INT32_MAX = 2147483647
-local UINT32_MAX = 4294967295
-local UINT_MIN = 0
 
 local math_huge = math.huge
 local math_ldexp = math.ldexp

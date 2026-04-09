@@ -1,22 +1,9 @@
-local VERTEX_MAX_DECIMALS = 4
 local MESH_MAX_BONES = 52
 local MAX_TRIS_PER_MESH = 65535
 
----@class VMatrix
-local vm_meta = FindMetaTable("VMatrix")
-local vm_Identity = vm_meta.Identity
-local vm_SetTranslation = vm_meta.SetTranslation
-local vm_SetAngles = vm_meta.SetAngles
-local vm_Rotate = vm_meta.Rotate
-local vm_SetScale = vm_meta.SetScale
----@class Color
-local clr_meta = FindMetaTable("Color")
-local clr_ToHex = clr_meta.ToHex
 ---@class IMesh
 local im_meta = FindMetaTable("IMesh")
 local im_Destroy = im_meta.Destroy
-local v_meta = FindMetaTable("Vector")
-local v_Dot = v_meta.Dot
 
 local mesh_Begin = mesh.Begin
 local mesh_Position = mesh.Position
@@ -30,28 +17,15 @@ local mesh_Color = mesh.Color
 local mesh_AdvanceVertex = mesh.AdvanceVertex
 local mesh_End = mesh.End
 local m_ceil = math.ceil
-local util_IntersectRayWithPlane = util.IntersectRayWithPlane
 local t_insert = table.insert
-local m_Round = math.Round
-local util_SHA256 = util.SHA256
 local r_SetBlend = render.SetBlend
 local r_SetColorModulation = render.SetColorModulation
 local STUDIO_RENDER = STUDIO_RENDER
 local STUDIO_DRAWTRANSLUCENTSUBMODELS = STUDIO_DRAWTRANSLUCENTSUBMODELS
 
-local kmd_GetPos,kmd_GetAngles,kmd_GetScale,kmd_GetModel,kmd_GetColor,kmd_GetMaterial,kmd_GetRenderGroup,kmd_GetRenderMode,kmd_GetClips
 local kmr_DrawMesh
 hook.Add("KatLibsLoaded","KScene",function()
-	kmd_GetPos = KModelData.GetPos
-	kmd_GetAngles = KModelData.GetAngles
-	kmd_GetScale = KModelData.GetScale
-	kmd_GetModel = KModelData.GetModel
-	kmd_GetColor = KModelData.GetColor
-	kmd_GetMaterial = KModelData.GetMaterial
-	kmd_GetRenderGroup = KModelData.GetRenderGroup
-	kmd_GetRenderMode = KModelData.GetRenderMode
-	kmd_GetClips = KModelData.GetClips
-	kmr_DrawMesh = KMeshRenderBase.DrawMesh
+	kmr_DrawMesh = KMeshUtils.DrawMesh
 end)
 
 local function splitSequentialTableByCount(tableToSplit,desiredCount)
@@ -78,205 +52,6 @@ local function splitSequentialTableByCount(tableToSplit,desiredCount)
 	return result
 end
 
-local splitMesh
-do --mesh clipping
-	local function isOnSideA(meshVertex,planeOrigin,planeNormal)
-		local vector = meshVertex.pos
-		local toPointFromPlane = vector - planeOrigin
-		return v_Dot(toPointFromPlane,planeNormal) < 0
-	end
-
-	local function splitTriangle(splitPoint,splitBase,meshVertexPoint,meshVertexBase1,meshVertexBase2,planeOrigin,planeNormal)
-		--[[
-				  	      /\ point					planeNormal	^
-					     /  \									|
-		--intersection1-o----o-intersection2--------planeOrigin-o--
-				  base1/______\ base2
-		]]
-		local vectorPoint,normalPoint,binormalPoint,tangentPoint,uPoint,vPoint = meshVertexPoint.pos,meshVertexPoint.normal,meshVertexPoint.binormal,meshVertexPoint.tangent,meshVertexPoint.u,meshVertexPoint.v
-		local vectorBase1,uBase1,vBase1 = meshVertexBase1.pos,meshVertexBase1.u,meshVertexBase1.v
-		local vectorBase2,uBase2,vBase2 = meshVertexBase2.pos,meshVertexBase2.u,meshVertexBase2.v
-		local vectorIntersection1 = util_IntersectRayWithPlane(vectorPoint,vectorBase1 - vectorPoint,planeOrigin,planeNormal)
-		local vectorIntersection2 = util_IntersectRayWithPlane(vectorPoint,vectorBase2 - vectorPoint,planeOrigin,planeNormal)
-		local uIntersection1,vIntersection1 = (uPoint + uBase1) / 2, (vPoint + vBase1) / 2
-		local uIntersection2,vIntersection2 = (uPoint + uBase2) / 2, (vPoint + vBase2) / 2
-
-		local meshVertexIntersection1 = { pos = vectorIntersection1, normal = normalPoint, binormal = binormalPoint, tangent = tangentPoint, u = uIntersection1, v = vIntersection1 }
-		local meshVertexIntersection2 = { pos = vectorIntersection2, normal = normalPoint, binormal = binormalPoint, tangent = tangentPoint, u = uIntersection2, v = vIntersection2 }
-
-		--add point triangle
-		t_insert(splitPoint,meshVertexPoint)
-		t_insert(splitPoint,meshVertexIntersection1)
-		t_insert(splitPoint,meshVertexIntersection2)
-
-		--split base into two triangles
-		t_insert(splitBase,meshVertexIntersection1)
-		t_insert(splitBase,meshVertexBase1)
-		t_insert(splitBase,meshVertexBase2)
-
-		t_insert(splitBase,meshVertexBase2)
-		t_insert(splitBase,meshVertexIntersection2)
-		t_insert(splitBase,meshVertexIntersection1)
-	end
-
-	local function sortTriangleToSide(splitA,splitB,meshVertex1,meshVertex2,meshVertex3,planeOrigin,planeNormal)
-		local IsV1OnSideA = isOnSideA(meshVertex1,planeOrigin,planeNormal)
-		local IsV2OnSideA = isOnSideA(meshVertex2,planeOrigin,planeNormal)
-		local IsV3OnSideA = isOnSideA(meshVertex3,planeOrigin,planeNormal)
-
-		if IsV1OnSideA and IsV2OnSideA and IsV3OnSideA then --111
-			t_insert(splitA,meshVertex1)
-			t_insert(splitA,meshVertex2)
-			t_insert(splitA,meshVertex3)
-			return
-		end
-
-		if not IsV1OnSideA and not IsV2OnSideA and not IsV3OnSideA then
-			t_insert(splitB,meshVertex1)
-			t_insert(splitB,meshVertex2)
-			t_insert(splitB,meshVertex3)
-			return
-		end
-
-		--find which one is the "point"
-		--it is imperative that the vertices retain the same order
-		if IsV1OnSideA ~= IsV2OnSideA and IsV1OnSideA ~= IsV3OnSideA then
-			local splitPoint = IsV1OnSideA and splitA or splitB
-			local splitBase = IsV1OnSideA and splitB or splitA
-			splitTriangle(splitPoint,splitBase,meshVertex1,meshVertex2,meshVertex3,planeOrigin,planeNormal)
-			return
-		end
-
-		if IsV2OnSideA ~= IsV1OnSideA and IsV2OnSideA ~= IsV3OnSideA then
-			local splitPoint = IsV2OnSideA and splitA or splitB
-			local splitBase = IsV2OnSideA and splitB or splitA
-			splitTriangle(splitPoint,splitBase,meshVertex2,meshVertex3,meshVertex1,planeOrigin,planeNormal)
-			return
-		end
-
-		if IsV3OnSideA ~= IsV1OnSideA and IsV3OnSideA ~= IsV2OnSideA then
-			local splitPoint = IsV3OnSideA and splitA or splitB
-			local splitBase = IsV3OnSideA and splitB or splitA
-			splitTriangle(splitPoint,splitBase,meshVertex3,meshVertex1,meshVertex2,planeOrigin,planeNormal)
-			return
-		end
-	end
-
-	function splitMesh(meshVertexTab,planeOrigin,planeNormal)
-		local splitA = {}
-		local splitB = {}
-
-		assert(#meshVertexTab % 3,"meshVertexTab not a multiple of 3!")
-		local triCount = #meshVertexTab / 3
-
-		for i = 0,triCount - 1 do
-			local offset = i * 3
-			sortTriangleToSide(splitA,splitB,
-				meshVertexTab[offset + 1],meshVertexTab[offset + 2],meshVertexTab[offset + 3],
-				planeOrigin,planeNormal
-			)
-		end
-
-		return splitA, splitB
-	end
-end
-
-local convertModelDataToMeshVertexes
-do --convert KModelData into MeshVertexes
-	--https://wiki.facepunch.com/gmod/Structures/MeshVertex
-
-	local function modelExists(path)
-		if string.find(path,"models/",1,true) ~= 1 then return false end
-		return file.Exists(path,"GAME")
-	end
-
-	local function roundVector(vec)
-		vec.x = m_Round(vec.x,VERTEX_MAX_DECIMALS)
-		vec.y = m_Round(vec.y,VERTEX_MAX_DECIMALS)
-		vec.z = m_Round(vec.z,VERTEX_MAX_DECIMALS)
-		return vec
-	end
-
-	local normalMatrix = Matrix()
-	local modelMatrix = Matrix()
-	local ANG_FIX = Angle(0,90,0)
-
-	local function appendTriangleData(triangles,modelData,boneIndex)
-		vm_Identity(normalMatrix)
-		vm_SetAngles(normalMatrix,kmd_GetAngles(modelData))
-		vm_Rotate(modelMatrix,ANG_FIX)
-
-		modelMatrix:Set(normalMatrix)
-		vm_SetTranslation(modelMatrix,kmd_GetPos(modelData))
-		vm_SetScale(modelMatrix,kmd_GetScale(modelData))
-
-		local modelPath = kmd_GetModel(modelData)
-		if not modelExists(modelPath) then
-			return
-		end
-
-		local modelTriangles = util.GetModelMeshes(modelPath)[1].triangles
-
-		for _,clip in pairs(kmd_GetClips(modelData)) do
-			_,modelTriangles = splitMesh(modelTriangles,clip.Pos,clip.Normal)
-		end
-
-		for _,meshVertex in pairs(modelTriangles) do
-			local normal = roundVector(normalMatrix * meshVertex.normal)
-			local binormal = meshVertex.binormal and roundVector(normalMatrix * meshVertex.binormal)
-			local tangent = meshVertex.tangent and roundVector(normalMatrix * meshVertex.tangent)
-			local pos = roundVector(modelMatrix * meshVertex.pos)
-			local weights = boneIndex and {{bone = boneIndex, weight = 1}}
-			t_insert(triangles,{
-				pos = pos,
-				normal = normal,
-				binormal = binormal,
-				tangent = tangent,
-				userdata = meshVertex.userdata,
-				u = meshVertex.u,
-				v = meshVertex.v,
-				weights = weights,
-			})
-		end
-	end
-
-	function convertModelDataToMeshVertexes(kModelDataTable,modelBoneLookup)
-		local meshData = {}
-
-		for i = 1,#kModelDataTable do
-			local currModelData = kModelDataTable[i]
-
-			local material = kmd_GetMaterial(currModelData)
-			local color = kmd_GetColor(currModelData)
-			local renderGroup = kmd_GetRenderGroup(currModelData)
-			local renderMode = kmd_GetRenderMode(currModelData)
-			local boneIndex = modelBoneLookup[currModelData]
-
-			local visualPropertyKey = util_SHA256(
-				material
-				.. clr_ToHex(color,true)
-				.. (renderGroup or "")
-				.. (renderMode or ""))
-
-			local visualPropertyGroup = meshData[visualPropertyKey]
-			if not visualPropertyGroup then
-				visualPropertyGroup = {
-					TriangleData = {},
-					Color = color,
-					Material = material,
-					RenderGroup = renderGroup,
-					RenderMode = renderMode,
-				}
-				meshData[visualPropertyKey] = visualPropertyGroup
-			end
-
-			appendTriangleData(visualPropertyGroup.TriangleData,currModelData,boneIndex)
-		end
-
-		return table.ClearKeys(meshData)
-	end
-end
-
 local getPriv
 ---SHARED<br/>
 ---A container object for IMeshes created from KModelData.
@@ -284,7 +59,7 @@ local getPriv
 ---@overload fun(modelDataTable: KModelData[]): KScene
 KScene,getPriv = KClass(function(modelDataTable)
 	return {
-		MeshData = convertModelDataToMeshVertexes(modelDataTable,{}),
+		MeshData = KMeshUtils.GetMeshVertexesFromModelData(modelDataTable,{}),
 		BoneIndexes = {},
 
 		Meshes = {},
@@ -331,7 +106,7 @@ KScene.CreateWithBones = getFactory(function(kModelDataBoneGroups)
 
 	return {
 		--serialized
-		MeshData = convertModelDataToMeshVertexes(kModelDataTable,modelBoneLookup),
+		MeshData = KMeshUtils.GetMeshVertexesFromModelData(kModelDataTable,modelBoneLookup),
 		BoneIndexes = boneNameIndexLookup,
 
 		--runtime
@@ -358,7 +133,6 @@ function KScene:Destroy()
 end
 local ksc_Destroy = KScene.Destroy
 
-
 local function buildRenderFunction(newMesh,material,colorRed,colorGreen,colorBlue,colorAlpha)
 	return function(boneData)
 		r_SetColorModulation(colorRed,colorGreen,colorBlue)
@@ -378,6 +152,7 @@ function KScene:Compile()
 
 	local meshData = priv.MeshData
 	for i = 1, #meshData do
+		---@type KVisualPropertyGroup
 		local visualPropertyGroup = meshData[i]
 
 		local material = Material(visualPropertyGroup.Material)
@@ -393,14 +168,15 @@ function KScene:Compile()
 			(renderGroup == RENDERGROUP_OPAQUE) and renderOpaque or
 			renderBoth
 
-		for _,triangleData in pairs(splitSequentialTableByCount(visualPropertyGroup.TriangleData,MAX_TRIS_PER_MESH)) do
+		for _,meshVertexes in pairs(splitSequentialTableByCount(visualPropertyGroup.MeshVertexes,MAX_TRIS_PER_MESH)) do
 			---parameter is only on dev branch, does not exist in documentation yet
 			---@diagnostic disable-next-line: redundant-parameter
 			local newMesh = Mesh(nil,2)
 
-			mesh_Begin(newMesh,MATERIAL_TRIANGLES,#triangleData)
-			for j = 1, #triangleData do
-				local meshVertex = triangleData[j]
+			mesh_Begin(newMesh,MATERIAL_TRIANGLES,#meshVertexes)
+			for j = 1, #meshVertexes do
+				---@type MeshVertex
+				local meshVertex = meshVertexes[j]
 
 				mesh_Position(meshVertex.pos)
 				mesh_Normal(meshVertex.normal)
@@ -493,9 +269,9 @@ local visualPropertyGroupSanitizer = KTableSanitizer({
 		Material = "string",
 		RenderGroup = "number",
 		RenderMode = "number",
-		TriangleData = "TriangleData[]",
+		MeshVertexes = "MeshVertexes[]",
 	},
-	TriangleData = {
+	MeshVertexes = {
 		color = {
 			r = "number",
 			g = "number",
