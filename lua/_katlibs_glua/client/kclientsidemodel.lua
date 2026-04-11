@@ -13,6 +13,7 @@ local vm_GetAngles = vm_meta.GetAngles
 local vm_GetScale = vm_meta.GetScale
 
 local cam_GetModelMatrix = cam.GetModelMatrix
+local IsValid = IsValid
 
 local function modelExists(path)
 	if string.find(path, "models/", 1, true) ~= 1 then return false end
@@ -23,39 +24,38 @@ end
 ---@field ClientsideEntity Entity
 ---@field Keys {[number] : boolean}
 
-local allocatedModels = {}
+--not in priv table so we can change the clientside model when it goes invalid without having to update all private tables
+local allocatedModelObjectLookup = setmetatable({},{__mode = "k"})
+local allocatedModelsPathLookup = {}
 local uidItr = 0
 
-local getPriv
 ---CLIENT<br/>
 ---A wrapper class for clientside models that automatically handles memory management.
 ---@class KClientsideModel
 ---@overload fun(model: string): KClientsideModel
-KClientsideModel,getPriv = KClass(function(model)
+KClientsideModel = KClass(function(model)
 	KError.ValidateArg("model",KVarConditions.StringNotEmpty(model))
 	assert(modelExists(model),"Model does not exist!")
 
-	local allocatedModel = allocatedModels[model]
+	local allocatedModel = allocatedModelsPathLookup[model]
 	if not allocatedModel then
-		local csm = ClientsideModel(model)
-		csm:SetNoDraw(true)
 		allocatedModel = {
-			ClientsideEntity = csm,
+			Model = model,
+			--ClientsideEntity
 			Keys = {},
 		}
-		allocatedModels[model] = allocatedModel
+		allocatedModelsPathLookup[model] = allocatedModel
 	end
 
 	uidItr = uidItr + 1
 	local uid = uidItr
-	allocatedModel.Keys[uid] = true
 
-	return {
+	allocatedModel.Keys[uid] = true
+	allocatedModelObjectLookup[KClass.GetSelf()] = allocatedModel
+
+	return setmetatable({
 		UID = uid,
-		Model = model,
-		Keys = allocatedModel.Keys,
-		ClientsideEntity = allocatedModel.ClientsideEntity,
-	}
+	},allocatedModel)
 end,{
 	Destructor = function(priv)
 		local keys = priv.Keys
@@ -63,7 +63,7 @@ end,{
 		if next(keys) then return end
 
 		priv.ClientsideEntity:Remove()
-		allocatedModels[priv.Model] = nil
+		allocatedModelsPathLookup[priv.Model] = nil
 	end,
 })
 
@@ -74,7 +74,7 @@ local defaultScale = Vector(1,1,1)
 ---Draws the clientside model.<br/>
 ---@param flags STUDIO?
 function KClientsideModel:Draw(flags)
-	local csm = getPriv(self).ClientsideEntity
+	local csm = allocatedModelObjectLookup[self].ClientsideEntity
 
 	local currMatrix = cam_GetModelMatrix()
 
@@ -93,5 +93,15 @@ end
 ---CLIENT,STATIC<br/>
 ---Gets the a table of model strings for all active KClientsideModels.<br/>
 function KClientsideModel.GetActiveList()
-	return table.GetKeys(allocatedModels)
+	return table.GetKeys(allocatedModelsPathLookup)
 end
+
+hook.Add("PreRender","KClientsideModel",function()
+	for _,allocatedModel in pairs(allocatedModelsPathLookup) do
+		if IsValid(allocatedModel.ClientsideEntity) then continue end
+
+		local csm = ClientsideModel(allocatedModel.Model)
+		csm:SetNoDraw(true)
+		allocatedModel.ClientsideEntity = csm
+	end
+end)
