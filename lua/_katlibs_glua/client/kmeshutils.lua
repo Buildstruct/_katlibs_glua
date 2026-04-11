@@ -56,7 +56,7 @@ local sortTriangleToSide, appendTriangleData
 
 ---@class KMeshUtils
 ---CLIENT, STATIC<br/>
----Class for drawing meshes using an entity draw call.<br/>
+---Utility class for mesh related functions.<br/>
 KMeshUtils = {}
 
 ---Garry's mod datatype for holding triangle data.<br/>
@@ -79,8 +79,8 @@ KMeshUtils = {}
 ---@field MeshVertexes MeshVertex[]
 ---@field Color Color
 ---@field Material string
----@field RenderGroup Vector?
----@field RenderMode Vector?
+---@field RenderGroup number?
+---@field RenderMode number?
 
 do --public static functions
 	---CLIENT, STATIC<br/>
@@ -109,7 +109,7 @@ do --public static functions
 		local splitA = {}
 		local splitB = {}
 
-		assert(#meshVertexTab % 3,"meshVertexTab not a multiple of 3!")
+		assert(#meshVertexTab % 3 == 0,"meshVertexTab not a multiple of 3!")
 		local triCount = #meshVertexTab / 3
 
 		for i = 0,triCount - 1 do
