@@ -79,7 +79,6 @@ local function createObjectFactory(classInternals,constructor)
 			currObj = object
 			local priv = populateObjectPriv(object,constructor,...)
 			currObj = nil
-			print("addestructor",priv)
 			addDestructorToTable(object,destructor,priv)
 			return object
 		end
