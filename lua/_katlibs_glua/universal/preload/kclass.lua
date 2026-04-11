@@ -7,7 +7,7 @@ local classInternalsLookup = setmetatable({},{__mode = "k"})
 
 ---@class _KClassParams
 ---@field InheritedClass any? A class that this new class will derive from.
----@field Destructor fun(object?: table)? A destructor for objects of this class to be called when they are cleaned by the GC.
+---@field Destructor fun(priv: table)? A destructor for objects of this class to be called when they are cleaned by the GC.
 ---@field Abstract boolean? Whether this class is abstract.
 
 ---@class _KClassPriv A table that holds the private members of a class or object.
@@ -33,9 +33,11 @@ local function implementInheritance(classInternals)
 		local basePopulateObjectPriv = inheritedInternals.PopulateObjectPriv
 		function classInternals.PopulateObjectPriv(object,constructor,...)
 			baseClassArgs = nil
-			classPrivDirectory[object] = constructor(...) or {}
+			local priv = constructor(...) or {}
+			classPrivDirectory[object] = priv
 			if not baseClassArgs then error("Failed to call KClass.CallBaseConstructor in inherited class!") end
 			basePopulateObjectPriv(object,inheritedPublicConstructor,unpack(baseClassArgs))
+			return priv
 		end
 
 		classInternals.ParentClasses = setmetatable({
@@ -46,7 +48,9 @@ local function implementInheritance(classInternals)
 		})
 	else
 		function classInternals.PopulateObjectPriv(object,constructor,...)
-			classPrivDirectory[object] = constructor(...) or {}
+			local priv = constructor(...) or {}
+			classPrivDirectory[object] = priv
+			return priv
 		end
 
 		classInternals.ParentClasses = setmetatable({
@@ -55,12 +59,13 @@ local function implementInheritance(classInternals)
 	end
 end
 
-local function addDestructorToTable(tab,destructor)
+local destructors = setmetatable({},{__mode = "k"})
+local function addDestructorToTable(tab,destructor,paramsTab)
 	local userData = newproxy(true)
+	destructors[tab] = userData
 	getmetatable(tab).destructorUserData = userData
 	getmetatable(userData).__gc = function()
-		print("destructor call on ",tab)
-		destructor(tab)
+		destructor(paramsTab)
 	end
 end
 
@@ -71,10 +76,11 @@ local function createObjectFactory(classInternals,constructor)
 	if destructor then
 		return function(...)
 			local object = setmetatable({},{__index = classInternals.Class})
-			addDestructorToTable(object,destructor)
 			currObj = object
-			populateObjectPriv(object,constructor,...)
+			local priv = populateObjectPriv(object,constructor,...)
 			currObj = nil
+			print("addestructor",priv)
+			addDestructorToTable(object,destructor,priv)
 			return object
 		end
 	end
@@ -115,9 +121,9 @@ end
 KClass = setmetatable({},{
 	__call = function(_,publicConstructor,params)
 		params = params or {}
-		KError.ValidateNullableArg("constructor",KVarConditions.Function(publicConstructor))
+		KError.ValidateNullableArg("publicConstructor",KVarConditions.Function(publicConstructor))
 		KError.ValidateNullableArg("params.Destructor",KVarConditions.Function(params.Destructor))
-		KError.ValidateNullableArg("params.Destructor",KVarConditions.Bool(params.Abstract))
+		KError.ValidateNullableArg("params.Abstract",KVarConditions.Bool(params.Abstract))
 		assert(params.InheritedClass == nil or classInternalsLookup[params.InheritedClass] ~= nil,"params.InheritedClass is not a KClass!")
 
 		local classMetatable = {}
