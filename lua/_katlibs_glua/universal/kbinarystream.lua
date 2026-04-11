@@ -6,6 +6,9 @@ local INT8_MAX = 127
 local INT16_MAX = 32767
 local INT32_MAX = 2147483647
 
+local TRUE = 1
+local FALSE = 0
+
 local math_huge = math.huge
 local math_ldexp = math.ldexp
 local math_frexp = math.frexp
@@ -36,7 +39,7 @@ do -- static
 	---SHARED, STATIC<br/>
 	---Converts the 8-bit integer to bytes. (litte endian)
 	---@param int integer
-	function KBinaryStream.GetInt8BytesLE(int)
+	function KBinaryStream.Int8ToBytesLE(int)
 		local _,_,_,d  = convertToBytesFromInt(int)
 		return string_char(d)
 	end
@@ -44,7 +47,7 @@ do -- static
 	---SHARED, STATIC<br/>
 	---Converts the 8-bit integer to bytes. (big endian)
 	---@param int integer
-	function KBinaryStream.GetInt8BytesBE(int)
+	function KBinaryStream.Int8ToBytesBE(int)
 		local a,_,_,_ = convertToBytesFromInt(int)
 		return string_char(a)
 	end
@@ -52,7 +55,7 @@ do -- static
 	---SHARED, STATIC<br/>
 	---Converts the 16-bit integer to bytes. (litte endian)
 	---@param int integer
-	function KBinaryStream.GetInt16BytesLE(int)
+	function KBinaryStream.Int16ToBytesLE(int)
 		local _,_,c,d  = convertToBytesFromInt(int)
 		return string_char(d,c)
 	end
@@ -60,7 +63,7 @@ do -- static
 	---SHARED, STATIC<br/>
 	---Converts the 16-bit integer to bytes. (big endian)
 	---@param int integer
-	function KBinaryStream.GetInt16BytesBE(int)
+	function KBinaryStream.Int16ToBytesBE(int)
 		local a,b,_,_ = convertToBytesFromInt(int)
 		return string_char(a,b)
 	end
@@ -68,7 +71,7 @@ do -- static
 	---SHARED, STATIC<br/>
 	---Converts the 32-bit integer to bytes. (little endian)
 	---@param int integer
-	function KBinaryStream.GetInt32BytesLE(int)
+	function KBinaryStream.Int32ToBytesLE(int)
 		local a,b,c,d = convertToBytesFromInt(int)
 		return string_char(d,c,b,a)
 	end
@@ -76,7 +79,7 @@ do -- static
 	---SHARED, STATIC<br/>
 	---Converts the 32-bit integer to bytes. (big endian)
 	---@param int integer
-	function KBinaryStream.GetInt32BytesBE(int)
+	function KBinaryStream.Int32ToBytesBE(int)
 		local a,b,c,d = convertToBytesFromInt(int)
 		return string_char(a,b,c,d)
 	end
@@ -126,9 +129,9 @@ do --set/get properties
 end
 
 do --read/write
-	local getInt8BytesLE = KBinaryStream.GetInt8BytesLE
-	local getInt16BytesLE = KBinaryStream.GetInt16BytesLE
-	local getInt32BytesLE = KBinaryStream.GetInt32BytesLE
+	local getInt8BytesLE = KBinaryStream.Int8ToBytesLE
+	local getInt16BytesLE = KBinaryStream.Int16ToBytesLE
+	local getInt32BytesLE = KBinaryStream.Int32ToBytesLE
 
 	---SHARED<br/>
 	---Reads the specified amount of bytes from the stream.
@@ -200,6 +203,7 @@ do --read/write
 	end
 
 	local readUInt8 = KBinaryStream.ReadUInt8
+	local writeUInt8 = KBinaryStream.WriteUInt8
 
 	--SHARED<br/>
 	---Reads a 16-bit unsigned integer from the byte stream.
@@ -303,6 +307,9 @@ do --read/write
 		write(self,string_char(packIEEE754Double(double)))
 	end
 
+	local readDouble = KBinaryStream.ReadDouble
+	local writeDouble = KBinaryStream.WriteDouble
+
 	---SHARED<br/>
 	---Writes a string to the byte stream.
 	function KBinaryStream:ReadString()
@@ -314,6 +321,57 @@ do --read/write
 	---@param str string
 	function KBinaryStream:WriteString(str)
 		write(self,str .. NULL_TERMINATOR)
+	end
+
+	---SHARED<br/>
+	---Writes a bool to the byte stream.
+	---@param bool boolean
+	function KBinaryStream:WriteBool(bool)
+		writeUInt8(self,bool and TRUE or FALSE)
+	end
+
+	---SHARED<br/>
+	---Reads a bool from the byte stream.
+	function KBinaryStream:ReadBool()
+		return readUInt8(self) == TRUE and true or false
+	end
+
+	---SHARED<br/>
+	---Writes a Vector to the byte stream.
+	---@param vec Vector
+	function KBinaryStream:WriteVector(vec)
+		writeDouble(self,vec.x)
+		writeDouble(self,vec.y)
+		writeDouble(self,vec.z)
+	end
+
+	---SHARED<br/>
+	---Reads a Vector from the byte stream.
+	function KBinaryStream:ReadVector()
+		return Vector(
+			readDouble(self),
+			readDouble(self),
+			readDouble(self))
+	end
+
+	---SHARED<br/>
+	---Writes a Color to the byte stream.
+	---@param color Color
+	function KBinaryStream:WriteColor(color)
+		writeUInt8(self,color.r)
+		writeUInt8(self,color.g)
+		writeUInt8(self,color.b)
+		writeUInt8(self,color.a)
+	end
+
+	---SHARED<br/>
+	---Reads a Color from the byte stream.
+	function KBinaryStream:ReadColor()
+		return Color(
+			readUInt8(self),
+			readUInt8(self),
+			readUInt8(self),
+			readUInt8(self))
 	end
 end
 

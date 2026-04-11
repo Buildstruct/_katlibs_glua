@@ -53,6 +53,7 @@ local ENTITY_CLASS = "kat_meshrenderbase"
 local currMesh,currMaterial,currBoneTable
 local meshRenderEntitySingleton
 local sortTriangleToSide, appendTriangleData
+local writeNullable,readNullable,writeUserdata,readUserdata,writeWeights,readWeights
 
 ---@class KMeshUtils
 ---CLIENT, STATIC<br/>
@@ -62,17 +63,17 @@ KMeshUtils = {}
 ---Garry's mod datatype for holding triangle data.<br/>
 ---https://wiki.facepunch.com/gmod/Structures/MeshVertex
 ---@class MeshVertex
----@field color Color
----@field normal Vector
----@field tangent Vector
----@field binormal Vector
 ---@field pos Vector
 ---@field u number
 ---@field v number
----@field u1 number
----@field v1 number
----@field userdata number[]
----@field weights table[]
+---@field normal Vector
+---@field binormal Vector?
+---@field tangent Vector?
+---@field color Color?
+---@field u1 number?
+---@field v1 number?
+---@field userdata number[]?
+---@field weights BoneWeight[]?
 
 ---MeshVertexes grouped by visual properties
 ---@class KVisualPropertyGroup
@@ -161,6 +162,47 @@ do --public static functions
 		end
 
 		return table.ClearKeys(meshData)
+	end
+
+	---Writes a MeshVertex to a KBinaryStream.
+	---@param stream KBinaryStream
+	---@param meshVertex MeshVertex
+	function KMeshUtils.WriteVertexToBinaryStream(stream,meshVertex,threaded)
+		stream:WriteVector(meshVertex.pos)
+		stream:WriteDouble(meshVertex.u)
+		stream:WriteDouble(meshVertex.v)
+		stream:WriteVector(meshVertex.normal)
+
+		writeNullable(stream,stream.WriteVector,meshVertex.binormal)
+		writeNullable(stream,stream.WriteVector,meshVertex.tangent)
+		writeNullable(stream,stream.WriteColor,meshVertex.color)
+		writeNullable(stream,stream.WriteDouble,meshVertex.u1)
+		writeNullable(stream,stream.WriteDouble,meshVertex.v1)
+		writeNullable(stream,writeUserdata,meshVertex.userdata)
+		writeNullable(stream,writeWeights,meshVertex.weights)
+
+		if threaded then coroutine.yield() end
+	end
+
+	---Reads a MeshVertex from a KBinaryStream.
+	---@param stream KBinaryStream
+	---@return MeshVertex
+	function KMeshUtils.ReadVertexFromBinaryStream(stream,threaded)
+		local meshVertex = {}
+		meshVertex.pos = stream:ReadVector()
+		meshVertex.u = stream:ReadDouble()
+		meshVertex.v = stream:ReadDouble()
+		meshVertex.normal = stream:ReadVector()
+
+		meshVertex.binormal = readNullable(stream,stream.ReadVector)
+		meshVertex.tangent = readNullable(stream,stream.ReadVector)
+		meshVertex.color = readNullable(stream,stream.ReadColor)
+		meshVertex.u1 = readNullable(stream,stream.ReadDouble)
+		meshVertex.v1 = readNullable(stream,stream.ReadDouble)
+		meshVertex.userdata = readNullable(stream,readUserdata)
+		meshVertex.weights = readNullable(stream,readWeights)
+
+		return meshVertex
 	end
 end
 
@@ -359,4 +401,71 @@ do --helper functions: mesh render entity singleton
 	end
 
 	scripted_ents.Register(ENT,ENTITY_CLASS)
+end
+
+do --helper functions: read and write meshvertex structures to KBinaryStream
+	function writeNullable(stream,writeFunc,value,...)
+		local null = (value == nil)
+		stream:WriteBool(null)
+		if not null then writeFunc(stream,value,...) end
+	end
+
+	function readNullable(stream,readFunc,...)
+		if stream:ReadBool() then return nil end
+		return readFunc(stream,...)
+	end
+
+	---@param stream KBinaryStream
+	function writeUserdata(stream,userdata)
+		stream:WriteDouble(userdata[1])
+		stream:WriteDouble(userdata[2])
+		stream:WriteDouble(userdata[3])
+		stream:WriteDouble(userdata[4])
+	end
+
+	---@param stream KBinaryStream
+	function readUserdata(stream)
+		local userdata = {}
+		userdata[1] = stream:ReadDouble()
+		userdata[2] = stream:ReadDouble()
+		userdata[3] = stream:ReadDouble()
+		userdata[4] = stream:ReadDouble()
+		return userdata
+	end
+
+	---@param stream KBinaryStream
+	---@param weights BoneWeight[]
+	function writeWeights(stream,weights)
+		local numWeights = #weights
+		stream:WriteDouble(numWeights)
+
+		for i = 1,numWeights do
+			local weight = weights[i]
+
+			stream:WriteUInt8(weight.bone)
+			stream:WriteDouble(weight.weight)
+		end
+	end
+
+	---@param stream KBinaryStream
+	function readWeights(stream)
+		local weights = {}
+		local numWeights = stream:ReadDouble()
+
+		local totalWeight = 0
+		for i = 1,numWeights do
+			local bone = stream:ReadUInt8()
+			local weight = stream:ReadDouble()
+			totalWeight = totalWeight + weight
+
+			weights[i] = {
+				bone = bone,
+				weight = weight,
+			}
+		end
+
+		assert(totalWeight == 1,"BoneWeights on mesh vertex do not add up to 1!")
+
+		return weights
+	end
 end
