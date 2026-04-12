@@ -2,6 +2,7 @@ local unpack = unpack
 local setmetatable = setmetatable
 local getmetatable = getmetatable
 local newproxy = newproxy
+local ProtectedCall = ProtectedCall
 
 local classInternalsLookup = setmetatable({},{__mode = "k"})
 
@@ -65,7 +66,7 @@ local function addDestructorToTable(tab,destructor,paramsTab)
 	destructors[tab] = userData
 	getmetatable(tab).destructorUserData = userData
 	getmetatable(userData).__gc = function()
-		destructor(paramsTab)
+		ProtectedCall(destructor,paramsTab)
 	end
 end
 

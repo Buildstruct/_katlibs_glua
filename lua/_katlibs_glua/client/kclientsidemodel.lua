@@ -55,15 +55,20 @@ KClientsideModel = KClass(function(model)
 
 	return setmetatable({
 		UID = uid,
+		Model = model,
 	},allocatedModel)
 end,{
 	Destructor = function(priv)
-		local keys = priv.Keys
+		local model = priv.Model
+		local allocatedModel = allocatedModelsPathLookup[model]
+		local keys = allocatedModel.Keys
+
 		keys[priv.UID] = nil
 		if next(keys) then return end
 
-		priv.ClientsideEntity:Remove()
-		allocatedModelsPathLookup[priv.Model] = nil
+		local csm = allocatedModel.ClientsideEntity
+		if IsValid(csm) then csm:Remove() end
+		allocatedModelsPathLookup[model] = nil
 	end,
 })
 
