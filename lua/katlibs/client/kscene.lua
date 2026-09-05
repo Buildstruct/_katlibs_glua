@@ -62,7 +62,7 @@ function KScene:Destroy() destroy(getPriv(self)) end
 
 local testModel = KClientsideModel("models/props_lab/cactus.mdl")
 
-function KScene:GetDrawHandle()
+function KScene:GetDrawHandle(ent)
 	local priv = getPriv(self)
 
 	local bones = {}
@@ -74,13 +74,12 @@ function KScene:GetDrawHandle()
 		local meshes = drawGroup.Meshes
 		local meshCount = #meshes
 		local renderGroup = studioProperties:GetRenderGroup()
-		local renderMode = studioProperties:GetRenderGroup()
 		local modelMatrix = handle:GetModelMatrix()
 
 		---@cast drawGroup _KDrawGroup
 		local function draw()
 			for i = 1,meshCount do
-				drawMesh(meshes[i],modelMatrix,bones,renderMode)
+				drawMesh(ent,meshes[i],modelMatrix,bones)
 				testModel:Draw()
 			end
 		end
