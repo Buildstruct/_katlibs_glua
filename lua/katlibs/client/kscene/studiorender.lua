@@ -14,11 +14,7 @@ local ent_meta = FindMetaTable("Entity")
 local e_SetupBones = ent_meta.SetupBones
 local e_DrawModel = ent_meta.DrawModel
 local e_EnableMatrix = ent_meta.EnableMatrix
----@class VMatrix
-local vm_meta = FindMetaTable("VMatrix")
-local vm_GetTranslation = vm_meta.GetTranslation
-local vm_GetAngles = vm_meta.GetAngles
-local IsValid = IsValid
+local e_RemoveAllDecals = ent_meta.RemoveAllDecals
 ---@class IMesh
 local im_meta = FindMetaTable("IMesh")
 local im_DrawSkinned = im_meta.DrawSkinned
@@ -55,6 +51,7 @@ function internal.DrawMesh(ent,mesh,modelMatrix,boneTable)
 
 	local temp = ent.RenderOverride
 	ent.RenderOverride = drawOverride
+	e_RemoveAllDecals(ent)
     e_SetupBones(ent)
     e_DrawModel(ent)
 	ent.RenderOverride = temp

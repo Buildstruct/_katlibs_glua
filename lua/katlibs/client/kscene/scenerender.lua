@@ -13,14 +13,16 @@ local function callAll(functions)
     end
 end
 
-hook.Add("PostDrawOpaqueRenderables","KScene",function()
+hook.Add("PostDrawOpaqueRenderables","KScene",function(_,_,drawingSkybox)
+    if drawingSkybox then return end
     for _,propertySet in pairs(propertySets) do
         local renderPropertiesWrapper = propertySet.RenderPropertiesWrapper
         renderPropertiesWrapper(callAll,propertySet.Opaque)
     end
 end)
 
-hook.Add("PostDrawTranslucentRenderables","KScene",function()
+hook.Add("PostDrawTranslucentRenderables","KScene",function(_,_,drawingSkybox)
+    if drawingSkybox then return end
     for _,propertySet in pairs(propertySets) do
         local renderPropertiesWrapper = propertySet.RenderPropertiesWrapper
         renderPropertiesWrapper(callAll,propertySet.Translucent)
