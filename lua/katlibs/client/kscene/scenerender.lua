@@ -26,7 +26,6 @@ local function renderAllFunctions(functions)
     --This fucking sucks but I'm not sure how else to fix this issue.
     local st = SysTime()
     model:Draw()
-    print((SysTime() - st) * 1e6)
 
     for _,func in pairs(functions) do
         func()
