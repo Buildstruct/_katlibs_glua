@@ -87,6 +87,19 @@ do --methods
             return itr,current.MeshVertexes,current.RenderProperties,current.StudioProperties
         end
     end
+
+    ---CLIENT<br/>
+    ---Returns the current vertex count of the mesh.
+    function KMeshData:GetVertexCount()
+        local priv = getPriv(self)
+
+        local total = 0
+        for _,renderPropertyGroup in pairs(priv) do
+            total = total + #renderPropertyGroup.MeshVertexes
+        end
+
+        return total
+    end
 end
 
 do --static functions

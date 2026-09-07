@@ -1,60 +1,66 @@
-
-local ENTITY_CLASS = "kat_meshrenderbase"
-local INVISIBLE_MESH = Mesh()
-INVISIBLE_MESH:BuildFromTriangles({
-    {pos = Vector(0.000,0.000,0.000)},
-    {pos = Vector(0.000,0.000,0.002)},
-    {pos = Vector(0.000,0.002,0.000)},
-})
-local NO_MAT = Material("models/debug/debugwhite")
-
-local empty = {}
----@class Entity
-local ent_meta = FindMetaTable("Entity")
-local e_SetupBones = ent_meta.SetupBones
-local e_DrawModel = ent_meta.DrawModel
-local e_EnableMatrix = ent_meta.EnableMatrix
-local e_RemoveAllDecals = ent_meta.RemoveAllDecals
+---@class VMatrix
+local vm_meta = FindMetaTable("VMatrix")
+local vm_GetTranslation = vm_meta.GetTranslation
 ---@class IMesh
 local im_meta = FindMetaTable("IMesh")
 local im_DrawSkinned = im_meta.DrawSkinned
 local c_PushModelMatrix = cam.PushModelMatrix
 local c_PopModelMatrix = cam.PopModelMatrix
-
-local currMesh,currModelMatrix,currBoneTable
+local r_ComputeLighting = render.ComputeLighting
+local r_SetModelLighting = render.SetModelLighting
+local BOX_FRONT = BOX_FRONT
+local BOX_BACK = BOX_BACK
+local BOX_RIGHT = BOX_RIGHT
+local BOX_LEFT = BOX_LEFT
+local BOX_TOP = BOX_TOP
+local BOX_BOTTOM = BOX_BOTTOM
+local FRONT = Vector(1,0,0)
+local BACK = Vector(-1,0,0)
+local RIGHT = Vector(0,1,0)
+local LEFT = Vector(0,-1,0)
+local TOP = Vector(0,0,1)
+local BOTTOM = Vector(0,0,-1)
+local X = 1
+local Y = 2
+local Z = 3
+local empty = {}
 
 ---@class _KSceneInternal
 local internal = {}
 
-local hideMatrix = Matrix()
-hideMatrix:SetScale(Vector(0,0,0))
+local function getLighting(pos)
+	local fr = r_ComputeLighting(pos,FRONT)
+	local bk = r_ComputeLighting(pos,BACK)
+	local rt = r_ComputeLighting(pos,RIGHT)
+	local lt = r_ComputeLighting(pos,LEFT)
+	local tp = r_ComputeLighting(pos,TOP)
+	local bm = r_ComputeLighting(pos,BOTTOM)
 
-local function drawOverride(ent)
-	e_EnableMatrix(ent,"RenderMultiply",hideMatrix)
-	e_DrawModel(ent)
-	c_PushModelMatrix(currModelMatrix)
-	im_DrawSkinned(currMesh,currBoneTable or empty,true)
-	c_PopModelMatrix()
+	return
+		fr[X],fr[Y],fr[Z],
+		bk[X],bk[Y],bk[Z],
+		rt[X],rt[Y],rt[Z],
+		lt[X],lt[Y],lt[Z],
+		tp[X],tp[Y],tp[Z],
+		bm[X],bm[Y],bm[Z]
 end
 
-local testModel = KClientsideModel("models/props_junk/watermelon01.mdl")
----Draw a mesh with the specified arguments using an entity draw call.<br/>
----https://github.com/Facepunch/garrysmod-issues/issues/4070#issuecomment-761080930
----@param ent Entity
----@param mesh IMesh
----@param modelMatrix VMatrix
----@param boneTable VMatrix[]
-function internal.DrawMesh(ent,mesh,modelMatrix,boneTable)
-    currMesh = mesh
-    currBoneTable = boneTable
-	currModelMatrix = modelMatrix
+local function setLighting(pos)
+	local frX,frY,frZ,bkX,bkY,bkZ,rtX,rtY,rtZ,ltX,ltY,ltZ,tpX,tpY,tpZ,bmX,bmY,bmZ = getLighting(pos)
 
-	local temp = ent.RenderOverride
-	ent.RenderOverride = drawOverride
-	e_RemoveAllDecals(ent)
-    e_SetupBones(ent)
-    e_DrawModel(ent)
-	ent.RenderOverride = temp
+	r_SetModelLighting(BOX_FRONT,frX,frY,frZ)
+	r_SetModelLighting(BOX_BACK,bkX,bkY,bkZ)
+	r_SetModelLighting(BOX_RIGHT,rtX,rtY,rtZ)
+	r_SetModelLighting(BOX_LEFT,ltX,ltY,ltZ)
+	r_SetModelLighting(BOX_TOP,tpX,tpY,tpZ)
+	r_SetModelLighting(BOX_BOTTOM,bmX,bmY,bmZ)
+end
+
+function internal.DrawMesh(mesh,modelMatrix,boneTable)
+	setLighting(vm_GetTranslation(modelMatrix))
+	c_PushModelMatrix(modelMatrix)
+	im_DrawSkinned(mesh,boneTable or empty,true)
+	c_PopModelMatrix()
 end
 
 return internal

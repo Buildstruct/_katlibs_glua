@@ -79,7 +79,7 @@ function KScene:GetDrawHandle(ent)
 		---@cast drawGroup _KDrawGroup
 		local function draw()
 			for i = 1,meshCount do
-				drawMesh(ent,meshes[i],modelMatrix,bones)
+				drawMesh(meshes[i],modelMatrix,bones)
 				testModel:Draw()
 			end
 		end
