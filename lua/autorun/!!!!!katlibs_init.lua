@@ -23,5 +23,5 @@ KAutoLoader.IncludeDir("katlibs/shared/",{Realm = "sh",Recursive = false})
 KAutoLoader.IncludeDir("katlibs/client/",{Realm = "cl",Recursive = false})
 KAutoLoader.IncludeDir("katlibs/server/",{Realm = "sv",Recursive = false})
 
-MsgC(Color(255,0,0),"[katlibs]",Color(255,255,255)," Initialized.")
+MsgC(Color(255,0,0),"[katlibs]",Color(255,255,255)," Initialized.","\n")
 hook.Run("KatLibsLoaded")
