@@ -24,7 +24,6 @@ local model = KClientsideModel("models/editor/air_node.mdl")
 local function renderAllFunctions(functions)
     --Forces the source engine to recompute the color modulation on a material by using an entity draw call
     --This fucking sucks but I'm not sure how else to fix this issue.
-    local st = SysTime()
     model:Draw()
 
     for _,func in pairs(functions) do

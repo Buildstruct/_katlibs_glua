@@ -60,9 +60,7 @@ function KScene:IsValid() return getPriv(self).Valid end
 
 function KScene:Destroy() destroy(getPriv(self)) end
 
-local testModel = KClientsideModel("models/props_lab/cactus.mdl")
-
-function KScene:GetDrawHandle(ent)
+function KScene:GetDrawHandle()
 	local priv = getPriv(self)
 
 	local bones = {}
@@ -80,7 +78,6 @@ function KScene:GetDrawHandle(ent)
 		local function draw()
 			for i = 1,meshCount do
 				drawMesh(meshes[i],modelMatrix,bones)
-				testModel:Draw()
 			end
 		end
 
