@@ -62,7 +62,6 @@ hook.Add("PreDrawOpaqueRenderables","KScene",function(_,_,drawingSkybox)
 
     local st = SysTime()
 
-    render.ModelMaterialOverride(nil)
     r_SuppressEngineLighting(true)
     r_SetLocalModelLights(modelLights)
     for _,propertySet in pairs(propertySets) do
@@ -80,7 +79,6 @@ hook.Add("PreDrawTranslucentRenderables","KScene",function(_,_,drawingSkybox)
 
     local st = SysTime()
 
-    render.ModelMaterialOverride(nil)
     r_SuppressEngineLighting(true)
     r_SetLocalModelLights(modelLights)
     for _,propertySet in pairs(propertySets) do
