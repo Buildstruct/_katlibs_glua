@@ -51,13 +51,16 @@ local function updateGlobalModelLights()
     v_SetUnpacked(sunLight.dir,-sunDirection[X],-sunDirection[Y],-sunDirection[Z])
 end
 
+local renderTime
 hook.Add("PreRender","KScene",function()
     updateGlobalModelLights()
+    renderTime = 0
 end)
 
-hook.Remove("PostDrawOpaqueRenderables","KScene")
 hook.Add("PreDrawOpaqueRenderables","KScene",function(_,_,drawingSkybox)
     if drawingSkybox then return end
+
+    local st = SysTime()
 
     render.ModelMaterialOverride(nil)
     r_SuppressEngineLighting(true)
@@ -68,11 +71,14 @@ hook.Add("PreDrawOpaqueRenderables","KScene",function(_,_,drawingSkybox)
     end
     r_SetLocalModelLights(nil)
     r_SuppressEngineLighting(false)
+
+    renderTime = renderTime + (SysTime() - st)
 end)
 
-hook.Remove("PostDrawTranslucentRenderables","KScene")
 hook.Add("PreDrawTranslucentRenderables","KScene",function(_,_,drawingSkybox)
     if drawingSkybox then return end
+
+    local st = SysTime()
 
     render.ModelMaterialOverride(nil)
     r_SuppressEngineLighting(true)
@@ -83,6 +89,8 @@ hook.Add("PreDrawTranslucentRenderables","KScene",function(_,_,drawingSkybox)
     end
     r_SetLocalModelLights(nil)
     r_SuppressEngineLighting(false)
+
+    renderTime = renderTime + (SysTime() - st)
 end)
 
 ---@class _KDrawGroup
@@ -161,6 +169,11 @@ function internal.RemoveFromRenderStack(uid)
     end
 
     uidHashLookup[uid] = nil
+end
+
+---@return number
+function internal.GetRenderTime()
+    return renderTime
 end
 
 return internal

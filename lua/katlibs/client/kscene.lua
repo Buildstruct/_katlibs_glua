@@ -56,10 +56,19 @@ end,{ Destructor = destroy })
 
 ---CLIENT<br/>
 ---Returns whether this KScene is valid or not.
+---@return boolean
 function KScene:IsValid() return getPriv(self).Valid end
 
+---CLIENT<br/>
+---Destroys this KScene and frees its meshes from memory.
 function KScene:Destroy() destroy(getPriv(self)) end
 
+---CLIENT,STATIC<br/>
+---Returns the total draw time for this frame of all currently rendering KScene handles.
+function KScene.GetRenderTime() return internal.GetRenderTime() end
+
+---CLIENT<br/>
+---Returns a new handle to draw this KScene with.
 function KScene:GetDrawHandle()
 	local priv = getPriv(self)
 
