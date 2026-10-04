@@ -1,4 +1,5 @@
 local SYSTEM_NAME = "KSyncedToken"
+local BIT_SIZE = 16
 
 if SERVER then
 	util.AddNetworkString(SYSTEM_NAME)
@@ -10,7 +11,7 @@ if SERVER then
 		net.Start(SYSTEM_NAME)
 		net.WriteBool(true)
 		net.WriteString(priv.Identifier)
-		net.WriteUInt(priv.UInt,32)
+		net.WriteUInt(priv.UInt,BIT_SIZE)
 		net.Broadcast()
 	end
 
@@ -18,13 +19,13 @@ if SERVER then
 		net.Start(SYSTEM_NAME)
 		net.WriteBool(false)
 		net.WriteString(priv.Identifier)
-		net.WriteUInt(priv.UInt,32)
+		net.WriteUInt(priv.UInt,BIT_SIZE)
 		net.Broadcast()
 	end
 
 	local getPriv
 	---SERVER<br/>
-	---A token that is a unique string that is synced from the server to the client using a uint32 to decrease bandwith.<br/>
+	---A token that is a unique string that is synced from the server to the client using a uint to decrease bandwith.<br/>
 	---<br/>
 	---Tokens are:
 	--- - Alphanumeric characters and underscores only
@@ -73,7 +74,7 @@ if SERVER then
 	function KSyncedToken.WriteToNet(identifier)
 		local token = stringTokenLookup[identifier]
 		assert(token ~= nil,"Token invalid!")
-		net.WriteUInt(getPriv(token).UInt,32)
+		net.WriteUInt(getPriv(token).UInt,BIT_SIZE)
 	end
 
 	---SHARED<br/>
@@ -81,7 +82,7 @@ if SERVER then
 	---Returns nil if this token is invalid (no active handles).
 	---@return string?
 	function KSyncedToken.ReadFromNet()
-		return uintTokenLookup[net.ReadUInt(32)]
+		return uintTokenLookup[net.ReadUInt(BIT_SIZE)]
 	end
 
 	KClientInit.Register("KSyncedToken",function(ply)
@@ -90,7 +91,7 @@ if SERVER then
 			net.Start(SYSTEM_NAME)
 			net.WriteBool(true)
 			net.WriteString(priv.Identifier)
-			net.WriteUInt(priv.UInt,32)
+			net.WriteUInt(priv.UInt,BIT_SIZE)
 			net.Send(ply)
 		end
 	end)
@@ -104,7 +105,7 @@ else
 		local add = net.ReadBool()
 
 		local identifier = net.ReadString()
-		local uint = net.ReadUInt(32)
+		local uint = net.ReadUInt(BIT_SIZE)
 
 		uintStringLookup[uint] = add and identifier or nil
 		stringUintLookup[identifier] = add and uint or nil
@@ -117,7 +118,7 @@ else
 	function KSyncedToken.WriteToNet(identifier)
 		local uint = stringUintLookup[identifier]
 		assert(uint ~= nil,"Token invalid!")
-		net.WriteUInt(uint,32)
+		net.WriteUInt(uint,BIT_SIZE)
 	end
 
 	---SHARED<br/>
@@ -125,7 +126,7 @@ else
 	---Returns nil if this token is invalid (no active handles).
 	---@return string?
 	function KSyncedToken.ReadFromNet()
-		local uint = net.ReadUInt(32)
+		local uint = net.ReadUInt(BIT_SIZE)
 		return uintStringLookup[uint]
 	end
 end
