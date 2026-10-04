@@ -35,10 +35,11 @@ if SERVER then
 		Destructor = remove,
 	})
 
+	local uidItr = 0
 	local instantiate = getPriv(KSyncedToken).Instantiate
 	---SERVER<br/>
 	---Registers a new synced token, or an active token with the same identifier.<br/>
-	---If the all tokens referencing the identifier are cleaned up by the garbage collector, the token will become invalid.<br/>
+	---If the all token handles referencing the identifier are cleaned up by the garbage collector, the token will become invalid.<br/>
 	---@param identifier string The identifier that will be used to sync the token with the client.<br/>
 	---@return KSyncedToken
 	function KSyncedToken.Get(identifier)
@@ -47,7 +48,8 @@ if SERVER then
 		local token = stringTokenLookup[identifier]
 		if token then return token end
 
-		local uint = #uintTokenLookup + 1
+		uidItr = uidItr + 1
+		local uint = uidItr
 		token = instantiate({
 			Identifier = identifier,
 			UInt = uint,
@@ -64,16 +66,20 @@ if SERVER then
 		return token
 	end
 
-	function KSyncedToken:Destroy()
-		remove(getPriv(self))
-	end
-
-	function KSyncedToken.WriteToNet(token)
-		if isstring(token) then token = stringTokenLookup[token] end
+	---SHARED<br/>
+	---Writes a token to the net stream.<br/>
+	---Errors if the token is invalid (no active handles).
+	---@param identifier string
+	function KSyncedToken.WriteToNet(identifier)
+		local token = stringTokenLookup[identifier]
 		assert(token ~= nil,"Token invalid!")
 		net.WriteUInt(getPriv(token).UInt,32)
 	end
 
+	---SHARED<br/>
+	---Reads a token from the net stream.<br/>
+	---Returns nil if this token is invalid (no active handles).
+	---@return string?
 	function KSyncedToken.ReadFromNet()
 		return uintTokenLookup[net.ReadUInt(32)]
 	end
@@ -104,20 +110,22 @@ else
 		stringUintLookup[identifier] = add and uint or nil
 	end)
 
+	---SHARED<br/>
+	---Writes a token to the net stream.<br/>
+	---Errors if the token is invalid (no active handles).
+	---@param identifier string
 	function KSyncedToken.WriteToNet(identifier)
 		local uint = stringUintLookup[identifier]
 		assert(uint ~= nil,"Token invalid!")
 		net.WriteUInt(uint,32)
 	end
 
+	---SHARED<br/>
+	---Reads a token from the net stream.<br/>
+	---Returns nil if this token is invalid (no active handles).
+	---@return string?
 	function KSyncedToken.ReadFromNet()
 		local uint = net.ReadUInt(32)
 		return uintStringLookup[uint]
 	end
-end
-
-if CLIENT then
-	net.Receive("kattest",function()
-        print(KSyncedToken.ReadFromNet())
-    end)
 end
