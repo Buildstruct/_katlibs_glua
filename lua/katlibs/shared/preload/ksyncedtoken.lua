@@ -82,7 +82,9 @@ if SERVER then
 	---Returns nil if this token is invalid (no active handles).
 	---@return string?
 	function KSyncedToken.ReadFromNet()
-		return uintTokenLookup[net.ReadUInt(BIT_SIZE)]
+		local token = uintTokenLookup[net.ReadUInt(BIT_SIZE)]
+		if not token then return end
+		return getPriv(token).Identifier
 	end
 
 	KClientInit.Register("KSyncedToken",function(ply)
@@ -109,6 +111,12 @@ else
 
 		uintStringLookup[uint] = add and identifier or nil
 		stringUintLookup[identifier] = add and uint or nil
+
+		if add then
+			print("Token registered",identifier)
+		else
+			print("Token removed",uint)
+		end
 	end)
 
 	---SHARED<br/>
