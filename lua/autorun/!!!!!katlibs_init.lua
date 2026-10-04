@@ -16,7 +16,11 @@ AddSubDirectoriesToCSLua("katlibs/shared/")
 
 include("katlibs/universal/preload/kerror.lua")
 include("katlibs/universal/preload/kclass.lua")
+include("katlibs/universal/preload/klogger.lua")
 include("katlibs/universal/preload/kautoloader.lua")
+
+include("katlibs/shared/preload/kclientinit.lua")
+include("katlibs/shared/preload/ksyncedtoken.lua")
 
 KAutoLoader.IncludeDir("katlibs/universal/",{Realm = "sh",Recursive = false})
 KAutoLoader.IncludeDir("katlibs/shared/",{Realm = "sh",Recursive = false})

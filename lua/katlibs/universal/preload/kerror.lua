@@ -66,7 +66,12 @@ KVarConditions = {
 
 	---@return [string, boolean, string]
 	StringNotEmpty = function(val)
-		return {val, isstring(val), "string (len > 0)"}
+		return {val, isstring(val) and #val > 0, "string (len > 0)"}
+	end,
+
+	---@return [string, boolean, string]
+	StringLengthLessOrEqual = function(val,length)
+		return {val, isstring(val) and #val <= length, s_format("string (len <= %d)",length)}
 	end,
 
 	---@return [table, boolean, string]
