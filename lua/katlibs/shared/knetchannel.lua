@@ -47,14 +47,15 @@ function KNetChannel:Send(callback,players,...)
         error(string.format("Net channel burst limit exceeded! (%d > %d)",cost,priv.BurstLimit))
     end
 
+    local queue = priv.Queue
     local canSend = priv.TokenBucket(cost)
-    if not canSend then
+    if queue:Any() or not canSend then
         if priv.Unreliable then
             net.Abort()
             return false
         end
 
-        priv.Queue:PushRight({
+        queue:PushRight({
             Cost = cost,
             Callback = callback,
             Args = {...},
