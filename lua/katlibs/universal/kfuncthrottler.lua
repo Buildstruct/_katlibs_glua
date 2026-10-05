@@ -7,6 +7,7 @@ local getPriv
 ---Controls how fast a function is executed based on a resource.
 ---@class KFuncThrottler
 ---@overload fun(limiter: KRegenResourcePool): KFuncThrottler
+---@deprecated Use KTimeUtils.TokenBucket
 KFuncThrottler,getPriv = KClass(function(limiter)
     KError.ValidateArg("limiter",KVarConditions.TableMeta(limiter,KRegenResourcePool,"KRegenResourcePool"))
 

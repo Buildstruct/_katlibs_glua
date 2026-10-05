@@ -8,6 +8,7 @@ if SERVER then util.AddNetworkString(NETSTRING) end
 
 --SHARED, STATIC<br/>
 --A static net stream implementation.
+---@deprecated Use KNetChannel
 KNetStream = {}
 
 --TODO: Make instanced

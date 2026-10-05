@@ -10,6 +10,7 @@ local getPriv
 ---A number value that regenerates over time and can be used.
 ---@class KRegenResourcePool
 ---@overload fun(max: number, regenRatePerSecond: number, allowDebt?: boolean): KRegenResourcePool
+---@deprecated Use KTimeUtils.TokenBucket
 KRegenResourcePool,getPriv = KClass(function(max,regenRatePerSecond,allowDebt)
     KError.ValidateArg("max",KVarConditions.NumberGreaterOrEqual(max,0))
     KError.ValidateArg("regenRatePerSecond",KVarConditions.NumberGreaterOrEqual(regenRatePerSecond,0))

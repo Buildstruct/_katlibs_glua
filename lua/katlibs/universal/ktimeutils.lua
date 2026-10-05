@@ -2,6 +2,8 @@
 ---Time related utilities for program control flow and animation.
 KTimeUtils = {}
 
+local m_min = math.min
+local m_clamp = math.Clamp
 local co_yield = coroutine.yield
 local co_running = coroutine.running
 local CurTime = CurTime
@@ -12,6 +14,7 @@ local assert = assert
 ---Returns a new lightweight tween function.
 ---Returns a number in the range [0-1] based on time since (object creation time + initial delay) over set duration.<br/>
 ---Starts at object creation time + initial delay.<br/>
+---Uses CurTime().
 ---@param duration number
 ---@param startDelay number?
 ---@return fun(): number
@@ -34,7 +37,8 @@ end
 
 ---SHARED, STATIC<br/>
 ---A tween that runs inside a coroutine.<br/>
----Blocks the current thread until the duration has finished.
+---Blocks the current thread until the duration has finished.<br/>
+---Uses CurTime().
 ---@async
 ---@param duration number
 ---@param func fun(up: number,...)
@@ -65,11 +69,14 @@ end
 ---After returning true once, it will return false until the interval passes, resetting it back to true.
 ---@param interval number
 ---@param startTrue boolean?
+---@param useSysTime boolean?
 ---@return fun(): boolean
-function KTimeUtils.IntervalTrigger(interval,startTrue)
+function KTimeUtils.IntervalTrigger(interval,startTrue,useSysTime)
     KError.ValidateArg("interval",KVarConditions.NumberGreater(interval,0))
 
-    local savedTime = CurTime()
+    local time = useSysTime and SysTime or CurTime
+
+    local savedTime = time()
     local t
 
     return function()
@@ -78,7 +85,7 @@ function KTimeUtils.IntervalTrigger(interval,startTrue)
             return true
         end
 
-        t = CurTime()
+        t = time()
         if (t - savedTime) > interval then
             savedTime = t
             return true
@@ -89,12 +96,41 @@ function KTimeUtils.IntervalTrigger(interval,startTrue)
 end
 
 ---SHARED, STATIC<br/>
+---Returns a new lightweight token bucket function.<br/>
+---@param burstLimit number
+---@param regenRate boolean?
+---@param useSysTime boolean?
+---@return fun(use: number): success: boolean, bucket: number
+function KTimeUtils.TokenBucket(burstLimit,regenRate,useSysTime)
+    KError.ValidateArg("burstLimit",KVarConditions.NumberGreater(burstLimit,0))
+    KError.ValidateArg("regenRate",KVarConditions.NumberGreater(regenRate,0))
+
+    local time = useSysTime and SysTime or CurTime
+
+    local bucket = burstLimit
+    local savedTime = time()
+    local t
+
+    return function(use)
+        t = time()
+        bucket = m_min(bucket + (t - savedTime) * regenRate,burstLimit)
+        savedTime = t
+
+        if use > bucket then return false,bucket end
+
+        bucket = bucket - use
+        return true,bucket
+    end
+end
+
+---SHARED, STATIC<br/>
 ---Executes a function-wrapped coroutine until:
 --- - A specified quota is reached.
 --- - The coroutine returns a value that is not nil.
 ---
 --- <br/>
 --- Forwards the result from the called coroutine when the coroutine finishes.
+---Uses SysTime().
 ---@param quota number
 ---@param coroutineFunc function
 function KTimeUtils.RunWrappedCoroutineWithQuota(quota,coroutineFunc)
