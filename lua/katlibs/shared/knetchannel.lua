@@ -29,10 +29,10 @@ local getPriv
 ---A throttled net channel that can queue messages to send over time.<br/>
 ---Multiple differently throttled channels can send to the same receiver.
 ---@class KNetChannel
----@overload fun(syncedToken: KSyncedToken, burstLimit: number, regenRate: number, unreliable: boolean?): KNetChannel
-KNetChannel,getPriv = KClass(function(syncedToken,burstLimit,regenRate,unreliable)
+---@overload fun(reservedSyncedToken: KReservedSyncedToken, burstLimit: number, regenRate: number, unreliable: boolean?): KNetChannel
+KNetChannel,getPriv = KClass(function(reservedSyncedToken,burstLimit,regenRate,unreliable)
     return {
-        SyncedToken = syncedToken,
+        SyncedToken = reservedSyncedToken,
         Queue = KQueue(),
         TokenBucket = KTimeUtils.TokenBucket(burstLimit,regenRate,true),
         BurstLimit = burstLimit,
