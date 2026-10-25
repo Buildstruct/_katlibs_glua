@@ -50,9 +50,6 @@ function KAutoLoader.IncludeDir(directory,params)
 	local realm = params.Realm
 	if realm then KError.ValidateArg("params.Realm",AssertValidRealm(realm)) end
 
-	local recursive = params.Recursive == nil and true or false
-	KError.ValidateArg("params.Recursive",KVarConditions.Bool(recursive))
-
 	local files, directories = file.Find(directory .. "*","LUA")
 
 	for _,v in ipairs(files) do
@@ -60,9 +57,9 @@ function KAutoLoader.IncludeDir(directory,params)
 		addFile(v,directory,realm)
 	end
 
-	if not recursive then return end
+	if not params.Recursive then return end
 
 	for _,v in ipairs(directories) do
-		KAutoLoader.IncludeDir(directory .. v,params)
+		KAutoLoader.IncludeDir(string.format("%s%s/",directory,v),params)
 	end
 end
