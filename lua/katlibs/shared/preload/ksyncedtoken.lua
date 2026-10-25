@@ -3,6 +3,7 @@ local BIT_SIZE = 16
 
 local uintTokenLookup = setmetatable({},{__mode = "v"})
 local stringTokenLookup = setmetatable({},{__mode = "v"})
+local reservedTokenLookup = setmetatable({},{__mode = "v"})
 
 local assertValidName
 local createNewToken,remove
@@ -49,9 +50,12 @@ function KSyncedToken.Reserve(identifier)
 	assertValidName(identifier)
 
 	local uniqueIdentifier = "!" .. string.lower(identifier)
-	assert(stringTokenLookup[uniqueIdentifier] == nil,
+	assert(reservedTokenLookup[uniqueIdentifier] == nil,
 		string.format("Reserved token cannot be created - identifier [%s] already in use elsewhere",identifier))
-	return createNewToken(uniqueIdentifier)
+
+	local token = createNewToken(uniqueIdentifier)
+	reservedTokenLookup[uniqueIdentifier] = token
+	return token
 end
 
 ---SHARED,STATIC<br/>
