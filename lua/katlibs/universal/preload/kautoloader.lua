@@ -29,10 +29,13 @@ local function AssertValidRealm(val)
 end
 
 local function addFile(file,directory,realm)
-	if not realm then realm = string.lower(string.Left(file, 2)) end
+	if not realm then
+		if file[3] ~= "_" then return end
+		realm = string.lower(string.Left(file, 2))
+	end
 
 	local action = fileActions[realm]
-	action(directory .. file)
+	if action then action(directory .. file) end
 end
 
 ---Include all lua files in a directory<br/>
