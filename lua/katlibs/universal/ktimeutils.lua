@@ -3,7 +3,7 @@
 KTimeUtils = {}
 
 local m_min = math.min
-local m_clamp = math.Clamp
+local co_resume = coroutine.resume
 local co_yield = coroutine.yield
 local co_running = coroutine.running
 local CurTime = CurTime
@@ -124,19 +124,21 @@ function KTimeUtils.TokenBucket(burstLimit,regenRate,useSysTime)
 end
 
 ---SHARED, STATIC<br/>
----Executes a function-wrapped coroutine until:
+---Executes a coroutine in a while loop until:
 --- - A specified quota is reached.
 --- - The coroutine returns a value that is not nil.
----
+--- - The coroutine returns an error. (An error is thrown at this stack level)
+
 --- <br/>
---- Forwards the result from the called coroutine when the coroutine finishes.
----Uses SysTime().
+---Uses SysTime().<br/>
 ---@param quota number
----@param coroutineFunc function
-function KTimeUtils.RunWrappedCoroutineWithQuota(quota,coroutineFunc)
+---@param thread thread
+function KTimeUtils.RunCoroutineWithQuota(quota,thread)
     local savedTime = SysTime()
+
     while true do
-        local result = coroutineFunc()
+        local success,result = co_resume(thread)
+        if not success then error(result) end
         if result ~= nil then return result end
         if (SysTime() - savedTime) > quota then return end
     end
