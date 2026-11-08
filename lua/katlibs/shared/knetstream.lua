@@ -4,7 +4,7 @@ local MAX_BYTES_PER_SECOND = 10e3
 local SYSTEM_NAME = "KNetStream"
 
 local maxChunks = math.ceil(MAX_CACHE_SIZE / MAX_BYTES_PER_SECOND)
-local systemSyncedToken = KSyncedToken.Get(SYSTEM_NAME)
+local systemSyncedToken = KSyncedToken.Reserve(SYSTEM_NAME)
 local netChannel = KNetChannel(systemSyncedToken,MAX_BYTES_PER_SECOND,MAX_BYTES_PER_SECOND)
 
 --SHARED, STATIC<br/>
