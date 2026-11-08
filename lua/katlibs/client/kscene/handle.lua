@@ -25,6 +25,7 @@ function internal.NewHandle(bones,onDestroy)
         ModelMatrix = Matrix(),
         Bones = bones,
         OnDestroy = onDestroy,
+        NoDraw = false,
     })
 end
 
@@ -45,6 +46,15 @@ function KSceneHandle:GetBoneMatrix(boneIndex)
     matrix = Matrix()
     bones[boneIndex] = matrix
     return matrix
+end
+
+function KSceneHandle:SetNoDraw(noDraw)
+    getPriv(self).NoDraw = noDraw and true or false
+end
+
+---@return boolean
+function KSceneHandle:GetNoDraw()
+    return getPriv(self).NoDraw
 end
 
 function KSceneHandle:Destroy()

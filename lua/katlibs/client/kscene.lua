@@ -85,6 +85,8 @@ function KScene:GetDrawHandle()
 
 		---@cast drawGroup _KDrawGroup
 		local function draw()
+			if handle:GetNoDraw() then return end
+
 			for i = 1,meshCount do
 				drawMesh(meshes[i],modelMatrix,bones)
 			end
