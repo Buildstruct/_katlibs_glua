@@ -113,10 +113,14 @@ do --static functions
         local meshCount = table.Count(priv)
         stream:WriteUInt8(meshCount)
 
+        local i = 0
         for _,data in pairs(priv) do
             KRenderProperty.WriteToStream(stream,data.RenderProperties)
             KStudioProperty.WriteToStream(stream,data.StudioProperties)
-            writeMesh(stream,data.MeshVertexes,taskToken)
+            writeMesh(stream,data.MeshVertexes,taskToken and taskToken:GetChildToken())
+
+            i = i + 1
+            if taskToken then taskToken:YieldAndReportProgress(i / meshCount) end
         end
     end
 
@@ -130,11 +134,13 @@ do --static functions
         local priv = getPriv(new)
 
         local meshCount = stream:ReadUInt8()
-        for _ = 1,meshCount do
+        for i = 1,meshCount do
             local renderProperties = KRenderProperty.ReadFromStream(stream)
             local studioProperties = KStudioProperty.ReadFromStream(stream)
             local destination = getOrAddRenderPropertyGroup(priv,renderProperties,studioProperties)
-            destination.MeshVertexes = readMesh(stream,taskToken)
+            destination.MeshVertexes = readMesh(stream,taskToken and taskToken:GetChildToken())
+
+            if taskToken then taskToken:YieldAndReportProgress(i / meshCount) end
         end
 
 		return new
