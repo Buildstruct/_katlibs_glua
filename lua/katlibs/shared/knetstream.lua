@@ -1,84 +1,64 @@
-if KNetStream then return end
-
+local MAX_CACHE_SIZE = 1.5e6
 local MAX_BYTES_PER_SECOND = 10e3
-local MAX_CHUNKS = 10e3
 
-local NETSTRING = "KNetStream"
-if SERVER then util.AddNetworkString(NETSTRING) end
+local SYSTEM_NAME = "KNetStream"
+
+local maxChunks = math.ceil(MAX_CACHE_SIZE / MAX_BYTES_PER_SECOND)
+local systemSyncedToken = KSyncedToken.Get(SYSTEM_NAME)
+local netChannel = KNetChannel(systemSyncedToken,MAX_BYTES_PER_SECOND,MAX_BYTES_PER_SECOND)
 
 --SHARED, STATIC<br/>
 --A static net stream implementation.
----@deprecated Use KNetChannel
 KNetStream = {}
 
---TODO: Make instanced
-
 do
-    local limiter = KRegenResourcePool(MAX_BYTES_PER_SECOND,MAX_BYTES_PER_SECOND)
-    local netThrottler = KFuncThrottler(limiter)
-
-    local function netSend(players)
-        if CLIENT then
-            net.SendToServer()
-            return
-        end
-
-        if players ~= nil then
-            net.Send(players)
-            return
-        end
-
-        net.Broadcast()
+    ---@param token KSyncedToken
+    local function sendHeader(token,numChunks)
+        net.WriteBool(true)
+        token:WriteToNet()
+        net.WriteUInt(numChunks,32)
     end
 
-    local function sendChunk(chunk,players)
-        net.Start(NETSTRING)
+    local function sendChunk(chunk)
         net.WriteBool(false)
         net.WriteData(chunk)
-        netSend(players)
     end
 
     ---SHARED,STATIC<br/>
-    ---Queue data to be sent to the opposite realm<br/>
-    ---@param id string
+    ---Queue data to be sent to the opposite realm.<br/>
+    ---@param syncedToken KSyncedToken
     ---@param data string
-    function KNetStream.SendData(id,data,players)
-        KError.ValidateArg("id",KVarConditions.String(id))
+    ---@param players? CRecipientFilter|Player|Player[]
+    function KNetStream.Send(syncedToken,data,players)
         KError.ValidateArg("data",KVarConditions.String(data))
 
         local dataSize = #data
+        assert(dataSize > 0,"Stream size cannot be 0!")
+
         local numChunks = math.ceil(dataSize / MAX_BYTES_PER_SECOND)
-        assert(numChunks < MAX_CHUNKS,string.format("size cannot be greater than %d bytes!",MAX_BYTES_PER_SECOND * MAX_CHUNKS))
+        if CLIENT then assert(dataSize < MAX_CACHE_SIZE,string.format("Stream size cannot exceed more than %s!",string.NiceSize(MAX_CACHE_SIZE))) end
 
-        netThrottler:Execute(#id + 33,function()
-            net.Start(NETSTRING)
-            net.WriteBool(true)
-            net.WriteString(id)
-            net.WriteUInt(numChunks,32)
-            netSend(players)
-        end)
-
+        netChannel:Send(sendHeader,players,syncedToken,numChunks)
         for i = 0, numChunks - 1 do
-            local chunkSize = math.min(dataSize,MAX_BYTES_PER_SECOND)
             local curr = MAX_BYTES_PER_SECOND * i
+            local chunkSize = math.min(dataSize - curr, MAX_BYTES_PER_SECOND)
+
             local chunk = data:sub(curr + 1, curr + chunkSize)
-            netThrottler:Execute(chunkSize,sendChunk,chunk,players)
+            netChannel:Send(sendChunk,players,chunk)
         end
     end
 end
+
 
 do
     local receivers = {}
 
     ---SHARED,STATIC<br/>
-    ---Set a callback for when a stream is fully received from the opposite realm<br/>
-    ---@param id string
+    ---Set a callback for when a stream is fully received from the opposite realm.<br/>
+    ---@param syncedToken KSyncedToken
     ---@param callback fun(data : string, ply : Player?)?
-    function KNetStream.ReceiveData(id,callback)
-        KError.ValidateArg("id",KVarConditions.String(id))
-        if callback then KError.ValidateArg("callback",KVarConditions.Function(callback)) end
-
-        receivers[id] = callback
+    function KNetStream.Receive(syncedToken,callback)
+        receivers[syncedToken] = callback
     end
 
     local streamData = {}
@@ -92,34 +72,56 @@ do
         streamData = tab
     end
 
-    net.Receive(NETSTRING,function(len,ply)
+    if SERVER then
+        hook.Add("PlayerDisconnected",SYSTEM_NAME,function(ply)
+            setStreamData(nil,ply)
+        end)
+    end
+
+    KNetChannel.Receive(systemSyncedToken,function(len,ply)
         local header = net.ReadBool()
         if header then
-            local id = net.ReadString()
+            local syncedToken = KSyncedToken.ReadFromNet()
             local numChunks = net.ReadUInt(32)
 
+            if SERVER and (numChunks > maxChunks or numChunks <= 0) then
+                setStreamData(nil,ply)
+                error(string.format("KNetStream header number of chunks out of bounds! Exploiter? SID: %s",ply:SteamID()))
+            end
+
             setStreamData({
-                ID = id,
+                SyncedToken = syncedToken,
                 NumChunks = numChunks,
                 Chunks = {},
+                CurrSize = 0,
             },ply)
         else --receive data
             local data = getStreamData(ply)
             if not data then return end
 
             local chunks = data.Chunks
-            local chunk = net.ReadData((len - 1) / 8)
+            local chunkSize = math.floor((len - 1) / 8)
 
+            if SERVER and chunkSize > MAX_BYTES_PER_SECOND then
+                setStreamData(nil,ply)
+                error(string.format("KNetStream received chunk is larger than the defined rate limit! Exploiter? SID: %s",ply:SteamID()))
+            end
+
+            local chunk = net.ReadData(chunkSize)
             table.insert(chunks,chunk)
 
-            if SERVER and #chunks > MAX_CHUNKS then
+            local totalSize = data.CurrSize + chunkSize
+            data.CurrSize = totalSize
+
+            if SERVER and totalSize > MAX_CACHE_SIZE then
                 setStreamData(nil,ply)
-                error(string.format("%s is sending more chunks than the MAX_CHUNKS limit! possible exploiter??",ply:SteamID()))
+                error(string.format("KNetStream cache is receiving more data than the defined limit! Exploiter? SID: %s",ply:SteamID()))
             end
 
             if #chunks >= data.NumChunks then
-                local cb = receivers[data.ID]
-                if cb then cb(table.concat(chunks),ply) end
+                local callback = receivers[data.SyncedToken]
+                if callback then ProtectedCall(callback,table.concat(chunks),ply) end
+
                 setStreamData(nil,ply)
             end
         end
