@@ -1,6 +1,5 @@
 ---@meta
 
-local getPriv
 ---SHARED, ABSTRACT<br/>
 ---Defines common behavior for read stream classes.
 ---@class KReadStream
