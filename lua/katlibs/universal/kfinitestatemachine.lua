@@ -9,7 +9,7 @@ KFiniteStateMachine,getPriv = KClass(function(states)
     for _,class in pairs(states) do
         local name = class:GetName()
         assert(name ~= nil,"State does not implement abstract GetName() method!")
-        assert(stateTable[name] ~= nil,string.format("Duplicate state name [%s]!",name))
+        assert(stateTable[name] == nil,string.format("Duplicate state name [%s]!",name))
         stateTable[name] = class
     end
 
