@@ -94,7 +94,7 @@ function KScene:GetDrawHandle()
 			end
 		end
 
-		addToRenderStack(uid,drawGroup.RenderProperties,renderGroup,draw)
+		addToRenderStack(uid,drawGroup.RenderProperties,studioProperties,renderGroup,draw)
 	end
 
 	return handle

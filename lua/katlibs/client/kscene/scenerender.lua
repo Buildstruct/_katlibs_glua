@@ -138,8 +138,8 @@ local switchAdd = {
 ---@param renderProperties KRenderProperty[]
 ---@param renderGroup integer
 ---@param renderFunction fun()
-function internal.AddToRenderStack(uid,renderProperties,renderGroup,renderFunction)
-    local hash = KRenderProperty.GetUniqueHash(renderProperties)
+function internal.AddToRenderStack(uid,renderProperties,studioProperties,renderGroup,renderFunction)
+    local hash = KRenderProperty.GetUniqueHash(renderProperties) .. tostring(studioProperties)
     local propertySet = getPropertySetOrNew(hash,renderProperties)
 
     local switch = switchAdd[renderGroup]
