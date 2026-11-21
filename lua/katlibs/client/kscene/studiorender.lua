@@ -24,6 +24,7 @@ local X = 1
 local Y = 2
 local Z = 3
 local empty = {}
+local IsValid = IsValid
 
 ---@class _KSceneInternal
 local internal = {}

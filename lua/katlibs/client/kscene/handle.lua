@@ -17,16 +17,18 @@ local instantiate = getPriv(KSceneHandle).Instantiate
 
 ---@param bones table
 ---@param onDestroy fun(uid: integer)
----@return KSceneHandle
+---@return KSceneHandle,table
 function internal.NewHandle(bones,onDestroy)
     uid = uid + 1
-    return instantiate({
+    local obj = instantiate({
+        Valid = true,
         UID = uid,
         ModelMatrix = Matrix(),
         Bones = bones,
         OnDestroy = onDestroy,
         NoDraw = false,
     })
+    return obj,getPriv(obj)
 end
 
 function KSceneHandle:GetUID()

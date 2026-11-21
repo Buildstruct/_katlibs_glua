@@ -52,7 +52,7 @@ KScene,getPriv = KClass(function(meshData)
 		DrawGroups = drawGroups,
 		Valid = true
 	}
-end,{ Destructor = destroy })
+end,{ Destructor = function(priv) destroy(priv) end })
 
 ---CLIENT<br/>
 ---Returns whether this KScene is valid or not.
@@ -70,22 +70,24 @@ function KScene.GetRenderTime() return internal.GetRenderTime() end
 ---CLIENT<br/>
 ---Returns a new handle to draw this KScene with.
 function KScene:GetDrawHandle()
-	local priv = getPriv(self)
+	local scenePriv = getPriv(self)
 
 	local bones = {}
-	local handle = newHandle(bones,removeFromRenderStack)
-	local uid = handle:GetUID()
+	local handle,handlePriv = newHandle(bones,removeFromRenderStack)
+	local uid = handlePriv.UID
+	local modelMatrix = handlePriv.ModelMatrix
 
-	for _,drawGroup in pairs(priv.DrawGroups) do
+	for _,drawGroup in pairs(scenePriv.DrawGroups) do
 		local studioProperties = drawGroup.StudioProperties
 		local meshes = drawGroup.Meshes
 		local meshCount = #meshes
 		local renderGroup = studioProperties:GetRenderGroup()
-		local modelMatrix = handle:GetModelMatrix()
 
 		---@cast drawGroup _KDrawGroup
 		local function draw()
-			if handle:GetNoDraw() then return end
+			--cant use a direct reference to the handle object here or memory leak
+			if handlePriv.NoDraw then return end
+			if not scenePriv.Valid then return end
 
 			for i = 1,meshCount do
 				drawMesh(meshes[i],modelMatrix,bones)
@@ -100,6 +102,8 @@ end
 
 do --helper functions
 	function destroy(priv)
+		if not priv.Valid then return end
+
 		local groups = priv.DrawGroups
 		for i = 1,#groups do
 			local meshes = groups[i].Meshes
