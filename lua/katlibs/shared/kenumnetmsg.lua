@@ -24,6 +24,7 @@ end
 ---@param netstring string
 ---@return fun(messageEnum: number) netMsgStart
 ---@return fun(messageEnum: number, func: KNetEnumReceiveCallback) netMsgReceiver
+---@deprecated
 function KEnumNetMsg(netstring,enums)
     KError.ValidateArg("netstring",KVarConditions.StringNotEmpty(netstring))
     KError.ValidateArg("enums",KVarConditions.Table(enums))
