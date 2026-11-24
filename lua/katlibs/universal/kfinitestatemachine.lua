@@ -19,7 +19,7 @@ KFiniteStateMachine,getPriv = KClass(function(states)
     }
 end)
 
----SHARED<br/>
+---SHARED, VIRTUAL<br/>
 ---Sets the current state of the statemachine.<br/>
 ---Pass nil as the name argument to stop execution of the statemachine.
 ---@param ... any Arguments to pass into the new state's constructor
