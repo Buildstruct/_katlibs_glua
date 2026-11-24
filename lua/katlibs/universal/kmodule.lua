@@ -31,9 +31,9 @@ local function removeChildTableKey(parentTab,childTabKey,childKey,callbackIfChil
     if not childTable then return end
 
     childTable[childKey] = nil
-    if not table.IsEmpty(parentTab) then return end
-    if not callbackIfChildTabEmpty then return end
-    callbackIfChildTabEmpty()
+    if not table.IsEmpty(childTable) then return end
+    parentTab[childTabKey] = nil
+    if callbackIfChildTabEmpty then callbackIfChildTabEmpty() end
 end
 
 local function obscureGlobalFunctionsInEnv(moduleEnv,globalLibraryName,functionTable)
@@ -102,9 +102,15 @@ KModule,getPriv = KClass(function(moduleName,entryPoint,env)
         end
 
         function dispose()
+            if not valid then return end
+            valid = false
+
             for hookType,tab in pairs(localHooks) do
-                for hookName,_ in pairs(tab) do
-                    removeLocalHook(hookType,hookName)
+                for localizedName in pairs(tab) do
+                    removeChildTableKey(moduleHooks,hookType,localizedName,function()
+                        removeGlobalHook(hookType)
+                    end)
+                    tab[localizedName] = nil
                 end
             end
 
@@ -117,8 +123,7 @@ KModule,getPriv = KClass(function(moduleName,entryPoint,env)
                 netReceivers[netUID] = nil
             end
 
-            valid = false
-            activeModules[this] = nil
+            if activeModules[moduleName] == this then activeModules[moduleName] = nil end
         end
 
         function addDisposeCB(key,callback)
@@ -136,31 +141,53 @@ KModule,getPriv = KClass(function(moduleName,entryPoint,env)
         end
 
         function addLocalHook(hookType,hookName,callback)
+            if not valid then return end
+
+            local localizedHookName = string.format("%s:%s",moduleName,hookName)
             local function callbackIfNewHook(hookFunctionsTable)
                 addGlobalHook(hookFunctionsTable,hookType,onHookError)
             end
 
-            getOrAddChildTable(moduleHooks,hookType,callbackIfNewHook)[hookName] = callback
-            getOrAddChildTable(localHooks,hookType)[hookName] = true
+            getOrAddChildTable(moduleHooks,hookType,callbackIfNewHook)[localizedHookName] = callback
+            getOrAddChildTable(localHooks,hookType)[localizedHookName] = callback
         end
 
         function removeLocalHook(hookType,hookName)
+            if not valid then return end
+
+            local localizedHookName = string.format("%s:%s",moduleName,hookName)
             local function callbackIfLastHook()
                 removeGlobalHook(hookType)
             end
 
-            removeChildTableKey(moduleHooks,hookType,hookName,callbackIfLastHook)
-            removeChildTableKey(localHooks,hookType,hookName)
+            removeChildTableKey(moduleHooks,hookType,localizedHookName,callbackIfLastHook)
+            removeChildTableKey(localHooks,hookType,localizedHookName)
         end
 
         function runLocalHook(hookType,...)
-            local hookTable = getOrAddChildTable(localHooks,hookType)
+            local hookTable = localHooks[hookType]
+            if not hookTable then return end
+
+            local argCount = select("#",...)
+            local args = {...}
             local returns = {}
-            for _,func in pairs(hookTable) do
-                table.insert(returns,func(...))
-                if #returns >= 6 then break end
+            local returnCount = 0
+
+            for _,callback in pairs(hookTable) do
+                if not valid then break end
+                if not isfunction(callback) then continue end
+
+                local worked,value = xpcall(callback,onHookError,unpack(args,1,argCount))
+                if not worked then break end
+
+                if value ~= nil then
+                    returnCount = returnCount + 1
+                    returns[returnCount] = value
+                    if returnCount >= 6 then break end
+                end
             end
-            return unpack(returns)
+
+            return unpack(returns,1,returnCount)
         end
     end
 
@@ -298,7 +325,8 @@ hook.Add("KatLibsLoaded","KModule",function()
             local module = activeModules[moduleName]
             if not IsValid(module) then return end
 
-            getPriv(module).RunLocalHook("KOnClientInit",ply)
+            getPriv(module).RunLocalHook("KOnClientInit",ply) --@depreciated
+            getPriv(module).RunLocalHook("KClientPostInit",ply)
         end)
     elseif CLIENT then
         netReceiveSetup(NET_ENUMS_SETUP.INITIALIZE_WITH_NETSTRING_UIDS,function(ply)
