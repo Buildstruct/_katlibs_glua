@@ -1,9 +1,12 @@
+local SYSTEM_NAME = "KClass"
+
 local unpack = unpack
 local setmetatable = setmetatable
 local getmetatable = getmetatable
 local newproxy = newproxy
 local ProtectedCall = ProtectedCall
 
+local luaShutdown = false
 local classInternalsLookup = setmetatable({},{__mode = "k"})
 
 ---@class _KClassParams
@@ -65,6 +68,7 @@ local function addDestructorToTable(tab,destructor,paramsTab)
 	local userData = newproxy(true)
 	destructors[tab] = userData
 	getmetatable(userData).__gc = function()
+		if luaShutdown then return end --can cause ENGINE CRASHES if we're not careful
 		ProtectedCall(destructor,paramsTab)
 	end
 end
@@ -189,3 +193,7 @@ end
 ---SHARED, STATIC<br/>
 ---Get the stack traversal amount needed to reference the lua chunk where a KClass constructor is called.
 function KClass.ConstructorStackSize() return 4 end
+
+hook.Add("ShutDown","KClass",function()
+	luaShutdown = true
+end)
