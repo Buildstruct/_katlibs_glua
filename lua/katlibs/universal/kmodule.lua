@@ -107,10 +107,17 @@ KModule,getPriv = KClass(function(moduleName,entryPoint,env)
 
             for hookType,tab in pairs(localHooks) do
                 for localizedName in pairs(tab) do
-                    removeChildTableKey(moduleHooks,hookType,localizedName,function()
-                        removeGlobalHook(hookType)
-                    end)
+                    local globalTab = moduleHooks[hookType]
+                    if globalTab then
+                        globalTab[localizedName] = nil
+                    end
                     tab[localizedName] = nil
+                end
+
+                local globalTab = moduleHooks[hookType]
+                if not globalTab or table.IsEmpty(globalTab) then
+                    removeGlobalHook(hookType)
+                    moduleHooks[hookType] = nil
                 end
             end
 
